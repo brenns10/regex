@@ -20,21 +20,11 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdint.h>
+#include <unistd.h>
+
+#include "regex.h"
 
 // Declarations:
-
-enum code {
-  Char, Match, Jump, Split, Save
-};
-
-typedef struct instr instr;
-struct instr {
-  enum code code;
-  char c;
-  size_t s;
-  instr *x, *y;
-  size_t lastidx;
-};
 
 typedef struct thread thread;
 struct thread {
@@ -48,41 +38,13 @@ struct thread_list {
   size_t n;
 };
 
-void printinstr(instr *i)
-{
-  switch (i->code) {
-  case Char:
-    printf("char '%c'\n", i->c);
-    break;
-  case Match:
-    printf("match\n");
-    break;
-  case Jump:
-    printf("jump pc%+d\n", (intptr_t)(i - i->x));
-    break;
-  case Split:
-    printf("split pc%+d, pc%+d\n", (intptr_t)(i - i->x), (intptr_t)(i - i->y));
-    break;
-  case Save:
-    printf("save %u\n", i->s);
-  }
-}
-
 // Printing, for diagnostics
-
-void printprog(instr *prog, size_t ninstr) {
-  for (size_t i = 0; i < ninstr; i++) {
-    printf("% 2d: ", i);
-    printinstr(prog + i);
-  }
-  printf("\n");
-}
 
 void printthreads(thread_list *tl, instr *prog, size_t nsave) {
   for (size_t i = 0; i < tl->n; i++) {
-    printf("T%u@pc=%d{", i, (intptr_t) (tl->t[i].pc - prog));
+    printf("T%zu@pc=%lu{", i, (intptr_t) (tl->t[i].pc - prog));
     for (size_t j = 0; j < nsave; j++) {
-      printf("%u,", tl->t[i].saved[j]);
+      printf("%lu,", tl->t[i].saved[j]);
     }
     printf("} ");
   }
@@ -212,41 +174,14 @@ ssize_t execute(instr *prog, size_t proglen, char *input, size_t **saved)
 
 // Driver program
 
-#define nelem(x) (sizeof(x)/sizeof((x)[0]))
-
 int main(int argc, char **argv)
 {
-  size_t *saved = NULL;
-  instr prog[] = {
-    {.code=Save, .c='\0', .x=NULL, .y=NULL, .lastidx=0, .s=0},
-    {.code=Char, .c='a', .x=NULL, .y=NULL, .lastidx=0},
-    {.code=Split, .c='\0', .x=NULL, .y=NULL, .lastidx=0},
-    {.code=Save, .c='\0', .x=NULL, .y=NULL, .lastidx=0, .s=1},
-    {.code=Char, .c='a', .x=NULL, .y=NULL, .lastidx=0},
-    {.code=Split, .c='\0', .x=NULL, .y=NULL, .lastidx=0},
-    {.code=Char, .c='b', .x=NULL, .y=NULL, .lastidx=0},
-    {.code=Match, .c='\0', .x=NULL, .y=NULL, .lastidx=0}
-  };
-  prog[2].x = prog + 1;
-  prog[2].y = prog + 3;
-  prog[5].x = prog + 4;
-  prog[5].y = prog + 6;
-
-  printprog(prog, nelem(prog));
-
-  char *test[] = {
-    "ab", "aab", "aaab", "aaaaaab", "b", "aaa"
-  };
-
-  for (size_t i = 0; i < nelem(test); i++) {
-    int res = execute(prog, nelem(prog), test[i], &saved);
-    printf("\"%s\": %d", test[i], res);
-    if (res != -1) {
-      printf(", {%u, %u}\n", saved[0], saved[1]);
-    } else {
-      printf("\n");
-    }
-    free(saved);
-    saved = NULL;
+  if (argc < 2) {
+    fprintf(stderr, "too few arguments");
   }
+  size_t n;
+  instr *ins = fread_prog(fopen(argv[1], "r"), &n);
+
+  write_prog(ins, n, stdout);
+  free(ins);
 }
