@@ -55,7 +55,7 @@
 
 enum Sym {
   CharSym, Special, Eof, LParen, RParen, LBracket, RBracket, Plus, Minus,
-  Star, Question, Caret
+  Star, Question, Caret, Pipe
 };
 typedef enum Sym Sym;
 
@@ -65,12 +65,12 @@ char *names[] = {
 };
 
 enum NonTerminal {
-  TERMnt, EXPRnt, REGEXnt, CLASSnt
+  TERMnt, EXPRnt, REGEXnt, CLASSnt, SUBnt
 };
 typedef enum NonTerminal NonTerminal;
 
 char *ntnames[] = {
-  "TERM", "EXPR", "REGEX", "CLASS"
+  "TERM", "EXPR", "REGEX", "CLASS", "SUB"
 };
 
 struct parse_tree {
@@ -171,6 +171,7 @@ parse_tree *TERM(void);
 parse_tree *EXPR(void);
 parse_tree *REGEX(void);
 parse_tree *CLASS(void);
+parse_tree *SUB(void);
 
 parse_tree *TERM(void)
 {
@@ -235,27 +236,40 @@ parse_tree *EXPR(void)
   // printf("END EXPR\n");
 }
 
-parse_tree *REGEX(void)
+parse_tree *SUB(void)
 {
-  // printf("REGEX\n");
-  parse_tree *result = nonterminal_tree(REGEXnt, 1);
+  // printf("SUB\n");
+  parse_tree *result = nonterminal_tree(SUBnt, 1);
   parse_tree *orig = result, *prev = result;
 
   while (sym() != Eof && sym() != RParen) { // seems like a bit of a hack
     result->children[0] = EXPR();
-    result->children[1] = nonterminal_tree(REGEXnt, 0);
+    result->children[1] = nonterminal_tree(SUBnt, 0);
     result->nchildren = 2;
     prev = result;
     result = result->children[1];
   }
 
-  // This prevents REGEX nonterminals with no children in the final parse tree.
+  // This prevents SUB nonterminals with no children in the final parse tree.
   if (prev != result) {
     prev->nchildren = 1;
     free(result);
   }
   return orig;
-  // printf("END REGEX\n");
+  // printf("END SUB\n");
+}
+
+parse_tree *REGEX(void)
+{
+  parse_tree *result = nonterminal_tree(REGEXnt, 1);
+  result->children[0] = SUB();
+
+  if (accept(Pipe)) {
+    result->nchildren = 3;
+    result->children[1] = terminal_tree(Pipe);
+    result->children[2] = REGEX();
+  }
+  return result;
 }
 
 parse_tree *CLASS(void)
