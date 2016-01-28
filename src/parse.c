@@ -28,22 +28,24 @@
 
 /*
 
-  V     -> char
+  REGEX -> SUB
+        -> SUB REGEX
+
+  SUB   -> EXPR
+        -> EXPR EXPR
+
+  EXPR  -> TERM
+        -> TERM +
+        -> TERM + ?
+        -> TERM *
+        -> TERM * ?
+        -> TERM ?
+        -> TERM ? ?
+
+  TERM  -> char
         -> special
         -> ( REGEX )
         -> [ (^) CLASS ]
-
-  E     -> V
-        -> V +
-        -> V + ?
-        -> V *
-        -> V * ?
-        -> V ?
-        -> V ? ?           // these all have high associativity
-
-  REGEX -> E
-        -> E REGEX
-        -> EOF
 
   CLASS -> char - char CLASS
         -> char CLASS
@@ -63,12 +65,12 @@ char *names[] = {
 };
 
 enum NonTerminal {
-  Vnt, Ent, REGEXnt, CLASSnt
+  TERMnt, EXPRnt, REGEXnt, CLASSnt
 };
 typedef enum NonTerminal NonTerminal;
 
 char *ntnames[] = {
-  "V", "E", "REGEX", "CLASS"
+  "TERM", "EXPR", "REGEX", "CLASS"
 };
 
 struct parse_tree {
@@ -165,44 +167,44 @@ void expect(Sym s) {
   exit(1);
 }
 
-parse_tree *V(void);
-parse_tree *E(void);
+parse_tree *TERM(void);
+parse_tree *EXPR(void);
 parse_tree *REGEX(void);
 parse_tree *CLASS(void);
 
-parse_tree *V(void)
+parse_tree *TERM(void)
 {
-  // printf("V\n");
+  // printf("TERM\n");
   if (accept(CharSym)) {
-    // printf("V -> CharSym\n");
-    parse_tree *result = nonterminal_tree(Vnt, 1);
+    // printf("TERM -> CharSym\n");
+    parse_tree *result = nonterminal_tree(TERMnt, 1);
     result->children[0] = terminal_tree(CharSym);
     return result;
   } else if (accept(Special)) {
-    // printf("V -> Special\n");
-    parse_tree *result = nonterminal_tree(Vnt, 1);
+    // printf("TERM -> Special\n");
+    parse_tree *result = nonterminal_tree(TERMnt, 1);
     result->children[0] = terminal_tree(Special);
     return result;
   } else if (accept(LParen)) {
-    // printf("V -> LParen REGEX RParen\n");
-    parse_tree *result = nonterminal_tree(Vnt, 3);
+    // printf("TERM -> LParen REGEX RParen\n");
+    parse_tree *result = nonterminal_tree(TERMnt, 3);
     result->children[0] = terminal_tree(LParen);
     result->children[1] = REGEX();
     expect(RParen);
     result->children[2] = terminal_tree(RParen);
     return result;
   } else if (accept(LBracket)) {
-    // printf("V -> LBracket (Caret) CLASS \n");
+    // printf("TERM -> LBracket (Caret) CLASS \n");
     parse_tree *result;
     if (accept(Caret)) {
-      result = nonterminal_tree(Vnt, 4);
+      result = nonterminal_tree(TERMnt, 4);
       result->children[0] = terminal_tree(LBracket);
       result->children[1] = terminal_tree(Caret);
       result->children[2] = CLASS();
       expect(RBracket);
       result->children[3] = terminal_tree(RBracket);
     } else {
-      result = nonterminal_tree(Vnt, 4);
+      result = nonterminal_tree(TERMnt, 4);
       result->children[0] = terminal_tree(LBracket);
       result->children[1] = CLASS();
       expect(RBracket);
@@ -210,17 +212,17 @@ parse_tree *V(void)
     }
     return result;
   } else {
-    fprintf(stderr, "error: V: syntax error\n");
+    fprintf(stderr, "error: TERM: syntax error\n");
     exit(1);
   }
-  // printf("END V\n");
+  // printf("END TERM\n");
 }
 
-parse_tree *E(void)
+parse_tree *EXPR(void)
 {
-  // printf("E\n");
-  parse_tree *result = nonterminal_tree(Ent, 1);
-  result->children[0] = V();
+  // printf("EXPR\n");
+  parse_tree *result = nonterminal_tree(EXPRnt, 1);
+  result->children[0] = TERM();
   if (accept(Plus) || accept(Star) || accept(Question)) {
     result->nchildren++;
     result->children[1] = terminal_tree(prevsym());
@@ -230,7 +232,7 @@ parse_tree *E(void)
     }
   }
   return result;
-  // printf("END E\n");
+  // printf("END EXPR\n");
 }
 
 parse_tree *REGEX(void)
@@ -240,7 +242,7 @@ parse_tree *REGEX(void)
   parse_tree *orig = result, *prev = result;
 
   while (sym() != Eof && sym() != RParen) { // seems like a bit of a hack
-    result->children[0] = E();
+    result->children[0] = EXPR();
     result->children[1] = nonterminal_tree(REGEXnt, 0);
     result->nchildren = 2;
     prev = result;
