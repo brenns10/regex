@@ -38,6 +38,9 @@ instr *read_prog(char *str, size_t *ninstr);
 instr *fread_prog(FILE *f, size_t *ninstr);
 void write_prog(instr *prog, size_t n, FILE *f);
 
+// parser.c
+void parser(void);
+
 #define nelem(x) (sizeof(x)/sizeof((x)[0]))
 
 #endif // SMB_PIKE_REGEX_H

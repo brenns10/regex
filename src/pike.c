@@ -176,12 +176,13 @@ ssize_t execute(instr *prog, size_t proglen, char *input, size_t **saved)
 
 int main(int argc, char **argv)
 {
-  if (argc < 2) {
+  /*  if (argc < 2) {
     fprintf(stderr, "too few arguments");
   }
   size_t n;
   instr *ins = fread_prog(fopen(argv[1], "r"), &n);
 
   write_prog(ins, n, stdout);
-  free(ins);
+  free(ins); */
+  parser();
 }
