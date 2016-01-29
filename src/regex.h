@@ -39,7 +39,7 @@ instr *fread_prog(FILE *f, size_t *ninstr);
 void write_prog(instr *prog, size_t n, FILE *f);
 
 // parser.c
-void parser(void);
+instr *recomp(char *regex);
 
 #define nelem(x) (sizeof(x)/sizeof((x)[0]))
 

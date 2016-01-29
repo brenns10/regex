@@ -176,6 +176,8 @@ ssize_t execute(instr *prog, size_t proglen, char *input, size_t **saved)
 
 int main(int argc, char **argv)
 {
+  (void)argc;
+  (void)argv;
   /*  if (argc < 2) {
     fprintf(stderr, "too few arguments");
   }
@@ -184,5 +186,5 @@ int main(int argc, char **argv)
 
   write_prog(ins, n, stdout);
   free(ins); */
-  parser();
+  recomp("(a+)(ab)?");
 }

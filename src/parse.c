@@ -17,80 +17,23 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-/*
-  TOKENS:
-
-  char (any directly matched text, including backslash escaped metachars)
-  metachars: (  )  +  -  *  ?  [  ]
-  special: \w, \d, \s, etc
-  eof
- */
-
-/*
-
-  REGEX -> SUB
-        -> SUB REGEX
-
-  SUB   -> EXPR
-        -> EXPR SUB
-
-  EXPR  -> TERM
-        -> TERM +
-        -> TERM + ?
-        -> TERM *
-        -> TERM * ?
-        -> TERM ?
-        -> TERM ? ?
-
-  TERM  -> char
-        -> special
-        -> ( REGEX )
-        -> [ (^) CLASS ]
-
-  CLASS -> char - char CLASS
-        -> char CLASS
-        -> -
-        ->
- */
-
-enum Sym {
-  CharSym, Special, Eof, LParen, RParen, LBracket, RBracket, Plus, Minus,
-  Star, Question, Caret, Pipe
-};
-typedef enum Sym Sym;
+#include "regex.h"
+#include "regparse.h"
 
 char *names[] = {
   "CharSym", "Special", "Eof", "LParen", "RParen", "LBracket", "RBracket",
   "Plus", "Minus", "Star", "Question", "Caret"
 };
 
-enum NonTerminal {
-  TERMnt, EXPRnt, REGEXnt, CLASSnt, SUBnt
-};
-typedef enum NonTerminal NonTerminal;
-
 char *ntnames[] = {
   "TERM", "EXPR", "REGEX", "CLASS", "SUB"
 };
 
-typedef struct Token Token;
-struct Token {
-  Sym sym;
-  char c;
-};
+/*
+  Convenience functions for parse trees.
+ */
 
-struct parse_tree {
-  size_t nchildren; // 0 -> terminal, >0 -> nonterminal
-
-  NonTerminal nt;
-  Token tok;
-
-  struct parse_tree *children[4];
-};
-
-typedef struct parse_tree parse_tree;
-
-parse_tree *terminal_tree(Token tok)
+static parse_tree *terminal_tree(Token tok)
 {
   parse_tree *tree = calloc(1, sizeof(parse_tree));
   tree->nchildren = 0;
@@ -98,7 +41,7 @@ parse_tree *terminal_tree(Token tok)
   return tree;
 }
 
-parse_tree *nonterminal_tree(NonTerminal nt, size_t nchildren)
+static parse_tree *nonterminal_tree(NonTerminal nt, size_t nchildren)
 {
   parse_tree *tree = calloc(1, sizeof(parse_tree));
   tree->nchildren = nchildren;
@@ -106,14 +49,26 @@ parse_tree *nonterminal_tree(NonTerminal nt, size_t nchildren)
   return tree;
 }
 
-void print_indent(int indent)
+static void free_tree(parse_tree *tree)
+{
+  for (size_t i = 0; i < tree->nchildren; i++) {
+    free_tree(tree->children[i]);
+  }
+  free(tree);
+}
+
+/*
+  Convenience printing functions.
+ */
+
+static void print_indent(int indent)
 {
   while (indent--) {
     printf(" ");
   }
 }
 
-void print_tree(parse_tree *tree, int indent)
+static void print_tree(parse_tree *tree, int indent)
 {
   print_indent(indent);
   if (tree == NULL) {
@@ -134,201 +89,100 @@ void print_tree(parse_tree *tree, int indent)
   }
 }
 
-char *input_ = "(a+)(bc)+";
-size_t index_ = 0;
-Token tok, prev;
+/*
+  Simple convenience functions for a parser.
+ */
 
-Token token(void)
+static bool accept(Sym s, Lexer *l)
 {
-  return tok;
-}
-
-Token prevtoken(void)
-{
-  return prev;
-}
-
-void escape(void)
-{
-  switch (input_[index_]) {
-  case '(':
-    tok = (Token){CharSym, '('};
-    break;
-  case ')':
-    tok = (Token){CharSym, ')'};
-    break;
-  case '[':
-    tok = (Token){CharSym, '['};
-    break;
-  case ']':
-    tok = (Token){CharSym, ']'};
-    break;
-  case '+':
-    tok = (Token){CharSym, '+'};
-    break;
-  case '-':
-    tok = (Token){CharSym, '-'};
-    break;
-  case '*':
-    tok = (Token){CharSym, '*'};
-    break;
-  case '?':
-    tok = (Token){CharSym, '?'};
-    break;
-  case '^':
-    tok = (Token){CharSym, '^'};
-    break;
-  case 'n':
-    tok = (Token){CharSym, '\n'};
-    break;
-  default:
-    tok = (Token){Special, input_[index_]};
-    break;
-  }
-}
-
-Token nextsym(void)
-{
-  prev = tok;
-  switch (input_[index_]) {
-  case '(':
-    tok = (Token){LParen, '('};
-    break;
-  case ')':
-    tok = (Token){RParen, ')'};
-    break;
-  case '[':
-    tok = (Token){LBracket, '['};
-    break;
-  case ']':
-    tok = (Token){RBracket, ']'};
-    break;
-  case '+':
-    tok = (Token){Plus, '+'};
-    break;
-  case '-':
-    tok = (Token){Minus, '-'};
-    break;
-  case '*':
-    tok = (Token){Star, '*'};
-    break;
-  case '?':
-    tok = (Token){Question, '?'};
-    break;
-  case '^':
-    tok = (Token){Caret, '^'};
-    break;
-  case '\\':
-    index_++;
-    escape();
-    break;
-  case '\0':
-    tok = (Token){Eof, '\0'};
-    break;
-  default:
-    tok = (Token){CharSym, input_[index_]};
-    break;
-  }
-  index_++;
-  printf("nextsym(): {%s, '%c'}\n", names[tok.sym], tok.c);
-  return tok;
-}
-
-bool accept(Sym s)
-{
-  if (token().sym == s) {
-    nextsym();
+  if (l->tok.sym == s) {
+    nextsym(l);
     return true;
   }
   return false;
 }
 
-void expect(Sym s) {
-  if (token().sym == s) {
-    nextsym();
+static void expect(Sym s, Lexer *l) {
+  if (l->tok.sym == s) {
+    nextsym(l);
     return;
   }
-  fprintf(stderr, "error: expected %s, got %s\n", names[s], names[token().sym]);
+  fprintf(stderr, "error: expected %s, got %s\n", names[s], names[l->tok.sym]);
   exit(1);
 }
 
-parse_tree *TERM(void);
-parse_tree *EXPR(void);
-parse_tree *REGEX(void);
-parse_tree *CLASS(void);
-parse_tree *SUB(void);
+/*
+  Recursive descent parser (main functions)
+ */
 
-parse_tree *TERM(void)
+static parse_tree *TERM(Lexer *l);
+static parse_tree *EXPR(Lexer *l);
+static parse_tree *REGEX(Lexer *l);
+static parse_tree *CLASS(Lexer *l);
+static parse_tree *SUB(Lexer *l);
+
+static parse_tree *TERM(Lexer *l)
 {
-  // printf("TERM\n");
-  if (accept(CharSym)) {
-    // printf("TERM -> CharSym\n");
+  if (accept(CharSym, l)) {
     parse_tree *result = nonterminal_tree(TERMnt, 1);
-    result->children[0] = terminal_tree(prevtoken());
+    result->children[0] = terminal_tree(l->prev);
     return result;
-  } else if (accept(Special)) {
-    // printf("TERM -> Special\n");
+  } else if (accept(Special, l)) {
     parse_tree *result = nonterminal_tree(TERMnt, 1);
-    result->children[0] = terminal_tree(prevtoken());
+    result->children[0] = terminal_tree(l->prev);
     return result;
-  } else if (accept(LParen)) {
-    // printf("TERM -> LParen REGEX RParen\n");
+  } else if (accept(LParen, l)) {
     parse_tree *result = nonterminal_tree(TERMnt, 3);
-    result->children[0] = terminal_tree(prevtoken());
-    result->children[1] = REGEX();
-    expect(RParen);
-    result->children[2] = terminal_tree(prevtoken());
+    result->children[0] = terminal_tree(l->prev);
+    result->children[1] = REGEX(l);
+    expect(RParen, l);
+    result->children[2] = terminal_tree(l->prev);
     return result;
-  } else if (accept(LBracket)) {
-    // printf("TERM -> LBracket (Caret) CLASS \n");
+  } else if (accept(LBracket, l)) {
     parse_tree *result;
-    if (accept(Caret)) {
+    if (accept(Caret, l)) {
       result = nonterminal_tree(TERMnt, 4);
       result->children[0] = terminal_tree((Token){LBracket, ']'});
-      result->children[1] = terminal_tree(prevtoken());
-      result->children[2] = CLASS();
-      expect(RBracket);
-      result->children[3] = terminal_tree(prevtoken());
+      result->children[1] = terminal_tree(l->prev);
+      result->children[2] = CLASS(l);
+      expect(RBracket, l);
+      result->children[3] = terminal_tree(l->prev);
     } else {
       result = nonterminal_tree(TERMnt, 4);
       result->children[0] = terminal_tree((Token){LBracket, ']'});
-      result->children[1] = CLASS();
-      expect(RBracket);
-      result->children[2] = terminal_tree(prevtoken());
+      result->children[1] = CLASS(l);
+      expect(RBracket, l);
+      result->children[2] = terminal_tree(l->prev);
     }
     return result;
   } else {
     fprintf(stderr, "error: TERM: syntax error\n");
     exit(1);
   }
-  // printf("END TERM\n");
 }
 
-parse_tree *EXPR(void)
+static parse_tree *EXPR(Lexer *l)
 {
-  // printf("EXPR\n");
   parse_tree *result = nonterminal_tree(EXPRnt, 1);
-  result->children[0] = TERM();
-  if (accept(Plus) || accept(Star) || accept(Question)) {
+  result->children[0] = TERM(l);
+  if (accept(Plus, l) || accept(Star, l) || accept(Question, l)) {
     result->nchildren++;
-    result->children[1] = terminal_tree(prevtoken());
-    if (accept(Question)) {
+    result->children[1] = terminal_tree(l->prev);
+    if (accept(Question, l)) {
       result->nchildren++;
       result->children[2] = terminal_tree((Token){Question, '?'});
     }
   }
   return result;
-  // printf("END EXPR\n");
 }
 
-parse_tree *SUB(void)
+static parse_tree *SUB(Lexer *l)
 {
-  // printf("SUB\n");
   parse_tree *result = nonterminal_tree(SUBnt, 1);
   parse_tree *orig = result, *prev = result;
 
-  while (token().sym != Eof && token().sym != RParen && token().sym != Pipe) { // seems like a bit of a hack
-    result->children[0] = EXPR();
+  while (l->tok.sym != Eof && l->tok.sym != RParen && l->tok.sym != Pipe) { // seems like a bit of a hack
+    result->children[0] = EXPR(l);
     result->children[1] = nonterminal_tree(SUBnt, 0);
     result->nchildren = 2;
     prev = result;
@@ -341,30 +195,30 @@ parse_tree *SUB(void)
     free(result);
   }
   return orig;
-  // printf("END SUB\n");
 }
 
-parse_tree *REGEX(void)
+static parse_tree *REGEX(Lexer *l)
 {
   parse_tree *result = nonterminal_tree(REGEXnt, 1);
-  result->children[0] = SUB();
+  result->children[0] = SUB(l);
 
-  if (accept(Pipe)) {
+  if (accept(Pipe, l)) {
     result->nchildren = 3;
-    result->children[1] = terminal_tree(token());
-    result->children[2] = REGEX();
+    result->children[1] = terminal_tree(l->tok);
+    result->children[2] = REGEX(l);
   }
   return result;
 }
 
-parse_tree *CLASS(void)
+static parse_tree *CLASS(Lexer *l)
 {
+  // this guy isn't really implemented yet
   while (true) {
-    if (accept(CharSym)) {
-      if (accept(Minus)) {
-        expect(CharSym);
+    if (accept(CharSym, l)) {
+      if (accept(Minus, l)) {
+        expect(CharSym, l);
       }
-    } else if (accept(Minus)) {
+    } else if (accept(Minus, l)) {
       // yay!
     } else {
       break;
@@ -373,12 +227,30 @@ parse_tree *CLASS(void)
   return NULL; // not yet implemented
 }
 
-void parser(void)
+instr *recomp(char *regex)
 {
-  printf("Start (index=%zu).\n", index_);
-  nextsym();
-  parse_tree *tree = REGEX();
-  expect(Eof);
+  Lexer l;
+
+  // Initialize the lexer.
+  l.input = regex;
+  l.index = 0;
+
+  // Create a parse tree!
+  nextsym(&l);
+  parse_tree *tree = REGEX(&l);
+  expect(Eof, &l);
+
+  // Diagnostics - print parse tree.
   print_tree(tree, 0);
-  printf("Done!\n");
+
+  // Generate code from parse tree.
+
+  // Free tree.
+  free_tree(tree);
+
+  // Optimize code.
+
+  // Return code.
+
+  return NULL;
 }
