@@ -233,9 +233,22 @@ static Fragment *regex(parse_tree *tree, State *state)
 {
   assert(tree->nt == REGEXnt);
   Fragment *s = sub(tree->children[0], state);
-  if (tree->nchildren == 2) {
-    Fragment *r = regex(tree->children[1], state);
-    join(s, r);
+  if (tree->nchildren == 3) {
+    Fragment *r = regex(tree->children[2], state);
+
+    Fragment *pre = newfrag(Split, state);
+    pre->in.x = (instr*) s->id;
+    pre->in.y = (instr*) r->id;
+    pre->next = s;
+
+    Fragment *m = newfrag(Match, state);
+    Fragment *j = newfrag(Jump, state);
+    j->in.x = (instr*) m->id;
+    j->next = r;
+    join(j, m);
+    join(pre, j);
+
+    return pre;
   }
   return s;
 }

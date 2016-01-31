@@ -174,17 +174,42 @@ ssize_t execute(instr *prog, size_t proglen, char *input, size_t **saved)
 
 // Driver program
 
+int numsaves(instr *code, size_t ncode)
+{
+  int ns = 0;
+  for (size_t i = 0; i < ncode; i++) {
+    if (code[i].code == Save && code[i].s > ns) {
+      ns = code[i].s;
+    }
+  }
+  return ns + 1;
+}
+
 int main(int argc, char **argv)
 {
-  (void)argc;
-  (void)argv;
-  /*  if (argc < 2) {
+  if (argc < 3) {
     fprintf(stderr, "too few arguments");
+    fprintf(stderr, "usage: %s REGEXP string1 [string2 [...]]\n", argv[0]);
+    exit(1);
   }
-  size_t n;
-  instr *ins = fread_prog(fopen(argv[1], "r"), &n);
 
-  write_prog(ins, n, stdout);
-  free(ins); */
-  recomp("(a+)(ab)?");
+  size_t n;
+  instr *code = recomp(argv[1], &n);
+  printf("Regex: \"%s\"\n", argv[1]);
+  write_prog(code, n, stdout);
+  int ns = numsaves(code, n);
+
+  for (int i = 2; i < argc; i++) {
+    size_t *saves = NULL;
+    ssize_t match = execute(code, n, argv[i], &saves);
+    if (match != -1) {
+      printf("\"%s\": match(%zd) ", argv[i], match);
+      for (size_t j = 0; j < ns; j += 2) {
+        printf("(%zd, %zd) ", saves[j], saves[j+1]);
+      }
+      printf("\n");
+    } else {
+      printf("\"%s\": no match\n", argv[i]);
+    }
+  }
 }

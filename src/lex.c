@@ -87,6 +87,9 @@ Token nextsym(Lexer *l)
   case '^':
     l->tok = (Token){Caret, '^'};
     break;
+  case '|':
+    l->tok = (Token){Pipe, '|'};
+    break;
   case '\\':
     l->index++;
     escape(l);

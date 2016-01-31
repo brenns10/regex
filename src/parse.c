@@ -22,7 +22,7 @@
 
 char *names[] = {
   "CharSym", "Special", "Eof", "LParen", "RParen", "LBracket", "RBracket",
-  "Plus", "Minus", "Star", "Question", "Caret"
+  "Plus", "Minus", "Star", "Question", "Caret", "Pipe"
 };
 
 char *ntnames[] = {
@@ -227,7 +227,7 @@ static parse_tree *CLASS(Lexer *l)
   return NULL; // not yet implemented
 }
 
-instr *recomp(char *regex)
+instr *recomp(char *regex, size_t *n)
 {
   Lexer l;
 
@@ -244,10 +244,7 @@ instr *recomp(char *regex)
   print_tree(tree, 0);
 
   // Generate code from parse tree.
-  size_t n;
-  instr *code = codegen(tree, &n);
-  printf("generated %zd instructions\n", n);
-  write_prog(code, n, stdout);
+  instr *code = codegen(tree, n);
 
   // Free tree.
   free_tree(tree);
