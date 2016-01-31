@@ -11,6 +11,21 @@
   @copyright    Copyright (c) 2016, Stephen Brennan.  Released under the Revised
                 BSD License.  See LICENSE.txt for details.
 
+  Notes on how code generation works:
+
+  The difficult part of code generation is that you need to generate code with
+  "jump" and "split" instructions that point to other instructions.  But since
+  the jump and split targets are just (instr*) pointers, and these frequently
+  get moved around or freed during code generation, a naive implementation will
+  end up with a bunch of dangling pointers.
+
+  My solution to this issue is to use "Fragments."  Fragments are stored in a
+  singly linked list, and they contain an instruction along with an ID.  As code
+  is generated, jump and split targets are stored using this ID rather than a
+  raw pointer.  Once you have a final Fragment list that contains all of your
+  code, it will be turned into an array, and all the IDs will be resolved
+  efficiently to locations in the final array using a table.
+
 *******************************************************************************/
 
 #include <stdio.h>
@@ -69,7 +84,8 @@ static void join(Fragment *a, Fragment *b)
       a->in.code = Jump;
       a->in.x = (instr*)b->id;
     }
-    // Jumps to the final instruction should instead be targeted to
+    // Jumps to the final match instruction should instead be targeted to the
+    // next fragment.
     if ((a->in.code == Jump || a->in.code == Split) && a->in.x == lastid) {
       a->in.x = (instr*) b->id;
     }
