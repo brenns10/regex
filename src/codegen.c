@@ -223,6 +223,10 @@ static Fragment *sub(parse_tree *tree, State *state)
   assert(tree->nt == SUBnt);
   Fragment *e = expr(tree->children[0], state);
   if (tree->nchildren == 2) {
+    /*
+      BLOCK from e
+      BLOCK from s
+     */
     Fragment *s = sub(tree->children[1], state);
     join(e, s);
   }
@@ -234,6 +238,17 @@ static Fragment *regex(parse_tree *tree, State *state)
   assert(tree->nt == REGEXnt);
   Fragment *s = sub(tree->children[0], state);
   if (tree->nchildren == 3) {
+    /*
+          split L1 L2     ;; this is "pre"
+      L1:
+          BLOCK from s
+          jump L3         ;; this is "j"
+      L2:
+          BLOCK from r
+      L3:
+          match           ;; this is "m"
+     */
+
     Fragment *r = regex(tree->children[2], state);
 
     Fragment *pre = newfrag(Split, state);
