@@ -57,6 +57,30 @@ Once the bytecode is created, it may be passed to the `execute()` function, in
 VM, and you can read more about it in his second article of the aforementioned
 series.
 
+Usage
+-----
+
+Currently, the main program allows you to specify a regular expression in the
+first argument, followed by an arbitrary number of test strings in the remaining
+arguments.  The output will be roughly in "assembly" format.  It will contain
+the token stream, parse tree, generated code, and the results of the test runs.
+If the output is saved to a file, it is suitable to be parsed by the
+`read_prog()` function.
+
+To give it a try yourself:
+
+```bash
+$ git clone https://github.com/brenns10/regex.git
+$ cd regex
+$ make
+$ bin/release/main "REGEX" test1 [test2 [test3 ...]]
+# I recommend you quote the REGEX argument so the shell doesn't interfere too
+# much with your regular expression.
+```
+
+Example output for `bin/release/main "(a+)(b+)" aabb abbbb aaaab bb aa >
+example.asm` can be found in [example.asm][eg].
+
 [re]: https://swtch.com/~rsc/regexp/
 [rsc]: https://swtch.com/~rsc/
 [gram]: grammar.md
@@ -64,3 +88,4 @@ series.
 [parse]: src/parse.c
 [codegen]: src/codegen.c
 [pike]: src/pike.c
+[eg]: example.asm

@@ -58,6 +58,10 @@ void escape(Lexer *l)
 
 Token nextsym(Lexer *l)
 {
+  if (l->tok.sym == Eof) {
+    return l->tok; // eof never ceases to be eof!
+  }
+
   l->prev = l->tok;
   switch (l->input[l->index]) {
   case '(':
@@ -102,6 +106,6 @@ Token nextsym(Lexer *l)
     break;
   }
   l->index++;
-  printf("nextsym(): {%s, '%c'}\n", names[l->tok.sym], l->tok.c);
+  printf(";; nextsym(): {%s, '%c'}\n", names[l->tok.sym], l->tok.c);
   return l->tok;
 }

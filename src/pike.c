@@ -193,23 +193,25 @@ int main(int argc, char **argv)
     exit(1);
   }
 
+  printf(";; Regex: \"%s\"\n\n", argv[1]);
   size_t n;
   instr *code = recomp(argv[1], &n);
-  printf("Regex: \"%s\"\n", argv[1]);
+  printf(";; BEGIN GENERATED CODE:\n");
   write_prog(code, n, stdout);
   int ns = numsaves(code, n);
+  printf(";; BEGIN TEST RUNS:\n");
 
   for (int i = 2; i < argc; i++) {
     size_t *saves = NULL;
     ssize_t match = execute(code, n, argv[i], &saves);
     if (match != -1) {
-      printf("\"%s\": match(%zd) ", argv[i], match);
+      printf(";; \"%s\": match(%zd) ", argv[i], match);
       for (size_t j = 0; j < ns; j += 2) {
         printf("(%zd, %zd) ", saves[j], saves[j+1]);
       }
       printf("\n");
     } else {
-      printf("\"%s\": no match\n", argv[i]);
+      printf(";; \"%s\": no match\n", argv[i]);
     }
   }
 }

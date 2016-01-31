@@ -63,6 +63,7 @@ static void free_tree(parse_tree *tree)
 
 static void print_indent(int indent)
 {
+  printf(";; ");
   while (indent--) {
     printf(" ");
   }
@@ -236,11 +237,13 @@ instr *recomp(char *regex, size_t *n)
   l.index = 0;
 
   // Create a parse tree!
+  printf(";; TOKENS:\n");
   nextsym(&l);
   parse_tree *tree = REGEX(&l);
   expect(Eof, &l);
 
   // Diagnostics - print parse tree.
+  printf(";; PARSE TREE:\n");
   print_tree(tree, 0);
 
   // Generate code from parse tree.
