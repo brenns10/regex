@@ -17,6 +17,7 @@
 #define SMB_REGEX_REGPARSE_H
 
 #include <stdlib.h>
+#include "regex.h"
 
 /**
    @brief Types of terminal symbols!
@@ -81,5 +82,6 @@ struct Lexer {
 
 void escape(Lexer *l);
 Token nextsym(Lexer *l);
+instr *codegen(parse_tree *tree, size_t *n);
 
 #endif // SMB_REGEX_REGPARSE_H

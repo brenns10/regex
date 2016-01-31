@@ -244,13 +244,14 @@ instr *recomp(char *regex)
   print_tree(tree, 0);
 
   // Generate code from parse tree.
+  size_t n;
+  instr *code = codegen(tree, &n);
+  printf("generated %zd instructions\n", n);
+  write_prog(code, n, stdout);
 
   // Free tree.
   free_tree(tree);
 
-  // Optimize code.
-
   // Return code.
-
-  return NULL;
+  return code;
 }
