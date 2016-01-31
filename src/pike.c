@@ -12,6 +12,9 @@
   @copyright    Copyright (c) 2016, Stephen Brennan.  Released under the Revised
                 BSD License.  See LICENSE.txt for details.
 
+                Portions of this code are based on code by Russ Cox, Copyright
+                2007-2009.
+
 *******************************************************************************/
 
 #include <assert.h>
