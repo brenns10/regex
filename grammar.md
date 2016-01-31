@@ -26,7 +26,7 @@ Here is the grammar I created:
 
 ```
   REGEX -> SUB
-        -> SUB REGEX
+        -> SUB | REGEX
 
   SUB   -> EXPR
         -> EXPR SUB
