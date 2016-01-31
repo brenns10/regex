@@ -345,7 +345,7 @@ void write_prog(instr *prog, size_t n, FILE *f)
       fprintf(f, "    match\n");
       break;
     case Jump:
-      fprintf(f, "    jump L%zu\n", prog[i].x - prog);
+      fprintf(f, "    jump L%zu\n", labels[prog[i].x - prog]);
       break;
     case Split:
       fprintf(f, "    split L%zu L%zu\n", labels[prog[i].x - prog],
