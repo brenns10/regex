@@ -24,7 +24,7 @@
  */
 enum Sym {
   CharSym, Special, Eof, LParen, RParen, LBracket, RBracket, Plus, Minus,
-  Star, Question, Caret, Pipe
+  Star, Question, Caret, Pipe, Dot
 };
 typedef enum Sym Sym;
 

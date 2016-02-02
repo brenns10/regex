@@ -40,6 +40,7 @@ Here is the grammar I created:
         -> TERM ? ?
 
   TERM  -> char
+        -> .
         -> special
         -> ( REGEX )
         -> [ (^) CLASS ]

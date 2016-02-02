@@ -21,7 +21,7 @@
 // DEFINITIONS
 
 enum code {
-  Char, Match, Jump, Split, Save
+  Char, Match, Jump, Split, Save, Any
 };
 
 typedef struct instr instr;

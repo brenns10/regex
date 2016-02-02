@@ -150,6 +150,14 @@ ssize_t execute(instr *prog, size_t proglen, char *input, size_t **saved)
         // add thread containing the next instruction to the next thread list.
         addthread(&next, pc+1, curr.t[t].saved, nsave, sp+1);
         break;
+      case Any:
+        if (input[sp] == '\0') {
+          free(curr.t[t].saved);
+          break; // dot can't match end of string!
+        }
+        // add thread containing the next instruction to the next thread list.
+        addthread(&next, pc+1, curr.t[t].saved, nsave, sp+1);
+        break;
       case Match:
         stash(curr.t[t].saved, saved);
         match = sp;

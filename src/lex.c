@@ -50,6 +50,9 @@ void escape(Lexer *l)
   case 'n':
     l->tok = (Token){CharSym, '\n'};
     break;
+  case '.':
+    l->tok = (Token){CharSym, '.'};
+    break;
   default:
     l->tok = (Token){Special, l->input[l->index]};
     break;
@@ -93,6 +96,9 @@ Token nextsym(Lexer *l)
     break;
   case '|':
     l->tok = (Token){Pipe, '|'};
+    break;
+  case '.':
+    l->tok = (Token){Dot, '.'};
     break;
   case '\\':
     l->index++;

@@ -22,7 +22,7 @@
 
 char *names[] = {
   "CharSym", "Special", "Eof", "LParen", "RParen", "LBracket", "RBracket",
-  "Plus", "Minus", "Star", "Question", "Caret", "Pipe"
+  "Plus", "Minus", "Star", "Question", "Caret", "Pipe", "Dot"
 };
 
 char *ntnames[] = {
@@ -124,11 +124,7 @@ static parse_tree *SUB(Lexer *l);
 
 static parse_tree *TERM(Lexer *l)
 {
-  if (accept(CharSym, l)) {
-    parse_tree *result = nonterminal_tree(TERMnt, 1);
-    result->children[0] = terminal_tree(l->prev);
-    return result;
-  } else if (accept(Special, l)) {
+  if (accept(CharSym, l) || accept(Dot, l) || accept(Special, l)) {
     parse_tree *result = nonterminal_tree(TERMnt, 1);
     result->children[0] = terminal_tree(l->prev);
     return result;

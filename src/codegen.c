@@ -150,6 +150,10 @@ static Fragment *term(parse_tree *t, State *s)
       f = newfrag(Char, s);
       f->in.c = t->children[0]->tok.c;
       f->next = newfrag(Match, s);
+    } else if (t->children[0]->tok.sym == Dot) {
+      // Dot
+      f = newfrag(Any, s);
+      f->next = newfrag(Match, s);
     } else if (t->children[0]->tok.sym == Special) {
       // Special
       fprintf(stderr, "not implemented: term special\n");

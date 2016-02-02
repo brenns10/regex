@@ -33,7 +33,7 @@ enum linetype {
 typedef enum linetype linetype;
 
 char *Opcodes[] = {
-  "char", "match", "jump", "split", "save"
+  "char", "match", "jump", "split", "save", "any"
 };
 
 
@@ -167,6 +167,11 @@ static instr read_instr(char *line, int lineno)
     }
     inst.code = Save;
     sscanf(tokens[1], "%zu", &inst.s);
+  } else if (strcmp(tokens[0], Opcodes[Any]) == 0) {
+    if (i != 1) {
+      fprintf(stderr, "line %d: require 1 token for any\n", lineno);
+    }
+    inst.code = Any;
   } else {
     fprintf(stderr, "line %d: unknown opcode \"%s\"\n", lineno, tokens[0]);
   }
@@ -353,6 +358,10 @@ void write_prog(instr *prog, size_t n, FILE *f)
       break;
     case Save:
       fprintf(f, "    save %zu\n", prog[i].s);
+      break;
+    case Any:
+      fprintf(f, "    any\n");
+      break;
     }
   }
 }
