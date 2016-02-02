@@ -191,7 +191,7 @@ int numsaves(instr *code, size_t ncode)
 int main(int argc, char **argv)
 {
   if (argc < 3) {
-    fprintf(stderr, "too few arguments");
+    fprintf(stderr, "too few arguments\n");
     fprintf(stderr, "usage: %s REGEXP string1 [string2 [...]]\n", argv[0]);
     exit(1);
   }
