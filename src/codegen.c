@@ -182,19 +182,27 @@ static Fragment *expr(parse_tree *t, State *s)
   } else {
     if (t->children[1]->tok.sym == Star) {
       /*
-            split L1 L2
         L1:
-            // BLOCK from f
-            jump L1
+            split L2 L3   ;; this is "a"  [ non-greedy: split L3 L2 ]
         L2:
-            match
+            BLOCK from f
+            jump L1       ;; this is "b"
+        L3:
+            match         ;; this is "c"
        */
       a = newfrag(Split, s);
       b = newfrag(Jump, s);
       c = newfrag(Match, s);
-      a->in.x = (instr*) f->id;
-      a->in.y = (instr*) c->id;
-      b->in.x = (instr*) f->id;
+      if (t->nchildren == 3) {
+        // Non-greedy
+        a->in.x = (instr*) c->id;
+        a->in.y = (instr*) f->id;
+      } else {
+        // Greedy
+        a->in.x = (instr*) f->id;
+        a->in.y = (instr*) c->id;
+      }
+      b->in.x = (instr*) a->id;
       a->next = f;
       b->next = c;
       join(a, b);
@@ -202,30 +210,44 @@ static Fragment *expr(parse_tree *t, State *s)
     } else if (t->children[1]->tok.sym == Plus) {
       /*
         L1:
-            // BLOCK from f
-            split L1 L2
+            BLOCK from f
+            split L1 L2   ;; this is "a"  [ non-greedy: split L2 L1 ]
         L2:
-            match
+            match         ;; this is "b"
        */
       a = newfrag(Split, s);
       b = newfrag(Match, s);
-      a->in.x = (instr*) f->id; // this order will change for greedy operators
-      a->in.y = (instr*) b->id;
+      if (t->nchildren == 3) {
+        // Non-greedy
+        a->in.x = (instr*) b->id;
+        a->in.y = (instr*) f->id;
+      } else {
+        // Greedy
+        a->in.x = (instr*) f->id;
+        a->in.y = (instr*) b->id;
+      }
       join(f, a);
       a->next = b;
       return f;
     } else if (t->children[1]->tok.sym == Question) {
       /*
-            split L1 L2
+            split L1 L2   ;; this is "a"  [ non-greedy: split L2 L1 ]
         L1:
-            // BLOCK from f
+            BLOCK from f
         L2:
-            match
+            match         ;; this is "b"
        */
       a = newfrag(Split, s);
       b = newfrag(Match, s);
-      a->in.x = (instr*) f->id;
-      a->in.y = (instr*) b->id;
+      if (t->nchildren == 3) {
+        // Non-greedy
+        a->in.x = (instr*) b->id;
+        a->in.y = (instr*) f->id;
+      } else {
+        // Greedy
+        a->in.x = (instr*) f->id;
+        a->in.y = (instr*) b->id;
+      }
       a->next = f;
       join(f, b);
       return a;
