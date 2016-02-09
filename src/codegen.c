@@ -158,7 +158,7 @@ static Fragment *term(parse_tree *t, State *s)
       // Special
       fprintf(stderr, "not implemented: term special\n");
     }
-  } else if (t->nchildren == 3) {
+  } else if (t->nchildren == 3 && t->children[0]->tok.sym == RParen) {
     // Parenthesized expression
     f = newfrag(Save, s);
     f->in.s = s->capture++;
@@ -167,9 +167,10 @@ static Fragment *term(parse_tree *t, State *s)
     n->in.s = s->capture++;
     n->next = newfrag(Match, s);
     join(f, n);
-  } else if (t->nchildren == 4) {
+  } else {
     // Character class
     fprintf(stderr, "not implemented: term character class\n");
+    exit(1);
   }
   return f;
 }

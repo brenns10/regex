@@ -139,14 +139,14 @@ static parse_tree *TERM(Lexer *l)
     parse_tree *result;
     if (accept(Caret, l)) {
       result = nonterminal_tree(TERMnt, 4);
-      result->children[0] = terminal_tree((Token){LBracket, ']'});
+      result->children[0] = terminal_tree((Token){LBracket, '['});
       result->children[1] = terminal_tree(l->prev);
       result->children[2] = CLASS(l);
       expect(RBracket, l);
       result->children[3] = terminal_tree(l->prev);
     } else {
-      result = nonterminal_tree(TERMnt, 4);
-      result->children[0] = terminal_tree((Token){LBracket, ']'});
+      result = nonterminal_tree(TERMnt, 3);
+      result->children[0] = terminal_tree((Token){LBracket, '['});
       result->children[1] = CLASS(l);
       expect(RBracket, l);
       result->children[2] = terminal_tree(l->prev);
@@ -210,18 +210,53 @@ static parse_tree *REGEX(Lexer *l)
 static parse_tree *CLASS(Lexer *l)
 {
   // this guy isn't really implemented yet
+  parse_tree *result = nonterminal_tree(CLASSnt, 0), *curr, *prev;
+  Token t1, t2, t3;
+  curr = result;
+
   while (true) {
     if (accept(CharSym, l)) {
+      prev = curr;
+      t1 = l->prev;
       if (accept(Minus, l)) {
-        expect(CharSym, l);
+        t2 = l->prev;
+        if (accept(CharSym, l)) {
+          t3 = l->prev;
+          // We have ourselves a range!  Parse it.
+          curr->children[0] = terminal_tree(t1);
+          curr->children[1] = terminal_tree(t3);
+          curr->children[2] = nonterminal_tree(CLASSnt, 0);
+          curr->nchildren = 3;
+          curr = curr->children[2];
+        } else {
+          // character followed by minus, but not range.
+          unget(t2, l);
+          curr->children[0] = terminal_tree(t1);
+          curr->children[1] = nonterminal_tree(CLASSnt, 0);
+          curr->nchildren = 2;
+          curr = curr->children[1];
+        }
+      } else {
+        // just a character
+        curr->children[0] = terminal_tree(t1);
+        curr->children[1] = nonterminal_tree(CLASSnt, 0);
+        curr->nchildren = 2;
+        curr = curr->children[1];
       }
     } else if (accept(Minus, l)) {
-      // yay!
+      // just a minus
+      prev = curr;
+      curr->children[0] = terminal_tree(l->prev);
+      curr->children[1] = nonterminal_tree(CLASSnt, 0);
+      curr->nchildren = 2;
+      curr = curr->children[1];
     } else {
+      free(curr);
+      prev->nchildren--;
       break;
     }
   }
-  return NULL; // not yet implemented
+  return result; // not yet implemented
 }
 
 instr *recomp(char *regex, size_t *n)
@@ -231,6 +266,7 @@ instr *recomp(char *regex, size_t *n)
   // Initialize the lexer.
   l.input = regex;
   l.index = 0;
+  l.nbuf = 0;
 
   // Create a parse tree!
   printf(";; TOKENS:\n");
