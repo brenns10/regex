@@ -70,6 +70,7 @@ struct parse_tree {
   struct parse_tree *children[4];
 };
 
+#define LEXER_BUFSIZE 4
 /**
    @brief Data structure containing lexer information.
  */
@@ -78,10 +79,13 @@ struct Lexer {
   char *input;
   size_t index;
   Token tok, prev;
+  Token buf[LEXER_BUFSIZE];
+  size_t nbuf;
 };
 
 void escape(Lexer *l);
 Token nextsym(Lexer *l);
+void unget(Token t, Lexer *l);
 instr *codegen(parse_tree *tree, size_t *n);
 
 #endif // SMB_REGEX_REGPARSE_H

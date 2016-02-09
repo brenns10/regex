@@ -65,7 +65,18 @@ Token nextsym(Lexer *l)
     return l->tok; // eof never ceases to be eof!
   }
 
+  // Handle buffered symbols first.
   l->prev = l->tok;
+  if (l->nbuf > 0) {
+    l->tok = l->buf[0];
+    for (size_t i = 0; i < l->nbuf - 1; i++) {
+      l->buf[i] = l->buf[i+1];
+    }
+    l->nbuf--;
+    printf(";; nextsym(): unbuffering {%s, '%c'}\n", names[l->tok.sym], l->tok.c);
+    return l->tok;
+  }
+
   switch (l->input[l->index]) {
   case '(':
     l->tok = (Token){LParen, '('};
@@ -114,4 +125,21 @@ Token nextsym(Lexer *l)
   l->index++;
   printf(";; nextsym(): {%s, '%c'}\n", names[l->tok.sym], l->tok.c);
   return l->tok;
+}
+
+void unget(Token t, Lexer *l)
+{
+  if (l->nbuf >= LEXER_BUFSIZE) {
+    fprintf(stderr, "error: maximum lexer buffer size exceeded, dumbass.\n");
+    exit(1);
+  }
+
+  printf(";; unget(): buffering {%s, '%c'}\n", names[t.sym], t.c);
+
+  for (int i = l->nbuf - 1; i >= 0; i--) {
+    l->buf[i+1] = l->buf[i];
+  }
+  l->buf[0] = l->tok;
+  l->tok = t;
+  l->nbuf++;
 }
