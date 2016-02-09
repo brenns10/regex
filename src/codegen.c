@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "regex.h"
 #include "regparse.h"
@@ -134,7 +135,7 @@ static void freefraglist(Fragment *f)
 static Fragment *regex(parse_tree *t, State *s);
 static Fragment *term(parse_tree *t, State *s);
 static Fragment *expr(parse_tree *t, State *s);
-//static Fragment *class(parse_tree *t, State *s);
+static Fragment *class(parse_tree *t, State *s, bool is_negative);
 static Fragment *sub(parse_tree *t, State *s);
 
 static Fragment *term(parse_tree *t, State *s)
@@ -169,8 +170,11 @@ static Fragment *term(parse_tree *t, State *s)
     join(f, n);
   } else {
     // Character class
-    fprintf(stderr, "not implemented: term character class\n");
-    exit(1);
+    if (t->nchildren == 3) {
+      f = class(t->children[1], s, false);
+    } else {
+      f = class(t->children[2], s, true);
+    }
   }
   return f;
 }
@@ -309,6 +313,56 @@ static Fragment *regex(parse_tree *tree, State *state)
     return pre;
   }
   return s;
+}
+
+static Fragment *class(parse_tree *tree, State *state, bool is_negative)
+{
+  size_t nranges = 0;
+  parse_tree *curr;
+  Fragment *f;
+
+  for (curr = tree; curr->nt == CLASSnt; curr = curr->children[curr->nchildren-1]) {
+    nranges++;
+  }
+
+  if (is_negative) {
+    f = newfrag(NRange, state);
+  } else {
+    f = newfrag(Range, state);
+  }
+
+  f->in.s = nranges;
+  f->in.x = calloc(nranges*2, sizeof(char));
+  char *block = (char*)f->in.x;
+
+  curr = tree;
+  nranges = 0;
+  while (curr->nt == CLASSnt) {
+    if (curr->children[curr->nchildren-1]->nt == CLASSnt) {
+      // Last one is another class
+      if (curr->nchildren == 2) {
+        block[2*nranges] = curr->children[0]->tok.c;
+        block[2*nranges+1] = curr->children[0]->tok.c;
+      } else { // 3
+        block[2*nranges] = curr->children[0]->tok.c;
+        block[2*nranges+1] = curr->children[1]->tok.c;
+      }
+    } else {
+      // No character class following.
+      if (curr->nchildren == 1) {
+        block[2*nranges] = curr->children[0]->tok.c;
+        block[2*nranges+1] = curr->children[0]->tok.c;
+      } else { // 2
+        block[2*nranges] = curr->children[0]->tok.c;
+        block[2*nranges+1] = curr->children[1]->tok.c;
+      }
+    }
+    curr = curr->children[curr->nchildren-1];
+    nranges++;
+  }
+
+  f->next = newfrag(Match, state);
+  return f;
 }
 
 instr *codegen(parse_tree *tree, size_t *n)
