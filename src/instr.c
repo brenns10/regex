@@ -366,14 +366,14 @@ void write_prog(instr *prog, size_t n, FILE *f)
     case NRange:
       fprintf(f, "    nrange");
       for (size_t j = 0; j < prog[i].s; j++) {
-        fprintf(f, "%c %c", block[2*j], block[2*j + 1]);
+        fprintf(f, " %c %c", block[2*j], block[2*j + 1]);
       }
       fprintf(f, "\n");
       break;
     case Range:
       fprintf(f, "    range");
       for (size_t j = 0; j < prog[i].s; j++) {
-        fprintf(f, "%c %c", block[2*j], block[2*j + 1]);
+        fprintf(f, " %c %c", block[2*j], block[2*j + 1]);
       }
       fprintf(f, "\n");
       break;
