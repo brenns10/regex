@@ -54,6 +54,31 @@ void printthreads(thread_list *tl, instr *prog, size_t nsave) {
   printf("\n");
 }
 
+// Helper evaluation functions for instructions
+
+bool range(instr in, char test) {
+  if (test == '\0') {
+    return false;
+  }
+  bool result = false;
+  char *block = (char *) in.x;
+
+  // use in.s for number of ranges, in.x as char* for ranges.
+  for (size_t i = 0; i < in.s; i++) {
+    if (block[i*2] <= test && test <= block [i*2 + 1]) {
+      result = true;
+      break; // short circuit yo!
+    }
+  }
+
+  // negate result for negative ranges
+  if (in.code == Range) {
+    return result;
+  } else {
+    return !result;
+  }
+}
+
 // Pike VM functions:
 
 thread_list newthread_list(size_t n)
@@ -156,6 +181,14 @@ ssize_t execute(instr *prog, size_t proglen, char *input, size_t **saved)
           break; // dot can't match end of string!
         }
         // add thread containing the next instruction to the next thread list.
+        addthread(&next, pc+1, curr.t[t].saved, nsave, sp+1);
+        break;
+      case Range:
+      case NRange:
+        if (!range(*pc, input[sp])) {
+          free(curr.t[t].saved);
+          break;
+        }
         addthread(&next, pc+1, curr.t[t].saved, nsave, sp+1);
         break;
       case Match:

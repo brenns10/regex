@@ -33,7 +33,7 @@ enum linetype {
 typedef enum linetype linetype;
 
 char *Opcodes[] = {
-  "char", "match", "jump", "split", "save", "any"
+  "char", "match", "jump", "split", "save", "any", "range", "nrange"
 };
 
 
@@ -342,6 +342,7 @@ void write_prog(instr *prog, size_t n, FILE *f)
     if (labels[i] > 0) {
       fprintf(f, "L%zu:\n", labels[i]);
     }
+    char *block = (char*) prog[i].x;
     switch (prog[i].code) {
     case Char:
       fprintf(f, "    char %c\n", prog[i].c);
@@ -361,6 +362,20 @@ void write_prog(instr *prog, size_t n, FILE *f)
       break;
     case Any:
       fprintf(f, "    any\n");
+      break;
+    case NRange:
+      fprintf(f, "    nrange");
+      for (size_t j = 0; j < prog[i].s; j++) {
+        fprintf(f, "%c %c", block[2*j], block[2*j + 1]);
+      }
+      fprintf(f, "\n");
+      break;
+    case Range:
+      fprintf(f, "    range");
+      for (size_t j = 0; j < prog[i].s; j++) {
+        fprintf(f, "%c %c", block[2*j], block[2*j + 1]);
+      }
+      fprintf(f, "\n");
       break;
     }
   }
