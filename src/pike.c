@@ -161,8 +161,8 @@ ssize_t execute(instr *prog, size_t proglen, char *input, size_t **saved)
     //printf("consider input %c\nthreads: ", input[sp]);
     //printthreads(&curr, prog, nsave);
 
-    // Execute each thread (this will only ever reach instructions that are
-    // either Char or Match, since addthread() stops with those).
+    // Execute each thread (this will only ever reach instructions that consume
+    // input, since addthread() stops with those).
     for (size_t t = 0; t < curr.n; t++) {
       instr *pc = curr.t[t].pc;
 
@@ -210,6 +210,8 @@ ssize_t execute(instr *prog, size_t proglen, char *input, size_t **saved)
     // Reset our new next list.
     next.n = 0;
   }
+
+  
 
   free(curr.t);
   free(next.t);
@@ -267,4 +269,6 @@ int main(int argc, char **argv)
       printf(";; \"%s\": no match\n", argv[i]);
     }
   }
+
+  free_prog(code, n);
 }

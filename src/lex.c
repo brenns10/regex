@@ -73,7 +73,7 @@ Token nextsym(Lexer *l)
       l->buf[i] = l->buf[i+1];
     }
     l->nbuf--;
-    printf(";; nextsym(): unbuffering {%s, '%'}\n", names[l->tok.sym],
+    printf(";; nextsym(): unbuffering {%s, '%s'}\n", names[l->tok.sym],
            char_to_string(l->tok.c));
     return l->tok;
   }

@@ -37,6 +37,7 @@ struct instr {
 instr *read_prog(char *str, size_t *ninstr);
 instr *fread_prog(FILE *f, size_t *ninstr);
 void write_prog(instr *prog, size_t n, FILE *f);
+void free_prog(instr *prog, size_t n);
 
 // parser.c
 instr *recomp(char *regex, size_t *n);

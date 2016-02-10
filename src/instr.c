@@ -446,4 +446,16 @@ void write_prog(instr *prog, size_t n, FILE *f)
       break;
     }
   }
+
+  free(labels);
+}
+
+void free_prog(instr *prog, size_t n)
+{
+  for (size_t i = 0; i < n; i++) {
+    if (prog[i].code == Range || prog[i].code == NRange) {
+      free(prog[i].x);
+    }
+  }
+  free(prog);
 }
