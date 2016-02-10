@@ -69,6 +69,8 @@ char *char_to_string(char c)
     }
     buffer[0] = '\\';
     buffer[2] = '\0';
+  } else if (c == '\0') {
+    buffer[0] = '\0'; // empty string...
   } else {
     buffer[0] = c;
     buffer[1] = '\0';
@@ -142,32 +144,6 @@ static char *trim(char *line, char *lastchar_out)
   }
 }
 
-/**
-   @brief Return the index of the next whitespace in a string.
-
-   Or the index of the null terminator, whichever comes first.
- */
-static size_t nextws(char *s) {
-  size_t i = 0;
-  while (s[i] && !isspace(s[i])) {
-    i++;
-  }
-  return i;
-}
-
-/**
-   @brief Return the index of the next non-whitespace in a string.
-
-   Or the index of the null terminator, whichever comes first.
- */
-static size_t skipws(char *s) {
-  size_t i = 0;
-  while (s[i] && isspace(s[i])) {
-    i++;
-  }
-  return i;
-}
-
 static char **tokenize(char *line, size_t *ntok)
 {
   #define SEP " \n\t\v\f"
@@ -186,7 +162,6 @@ static char **tokenize(char *line, size_t *ntok)
 
     buf[*ntok] = strtok(NULL, SEP);
   }
-  *ntok += 1;
   return buf;
 }
 
@@ -258,7 +233,7 @@ static instr read_instr(char *line, int lineno)
     inst.code = (strcmp(tokens[0], Opcodes[Range]) == 0) ? Range : NRange;
     inst.s = (size_t) (ntok - 1) / 2;
     char *block = calloc(ntok - 1, sizeof(char));
-    inst.x = block;
+    inst.x = (instr*)block;
     for (size_t i = 0; i < ntok - 1; i++) {
       block[i] = string_to_char(tokens[i+1]);
     }
