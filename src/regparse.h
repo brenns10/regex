@@ -88,4 +88,7 @@ Token nextsym(Lexer *l);
 void unget(Token t, Lexer *l);
 instr *codegen(parse_tree *tree, size_t *n);
 
+/* misc utilities */
+char *char_to_string(char c);
+
 #endif // SMB_REGEX_REGPARSE_H

@@ -36,6 +36,76 @@ char *Opcodes[] = {
   "char", "match", "jump", "split", "save", "any", "range", "nrange"
 };
 
+/*
+  Utilities for input/output
+ */
+char *char_to_string(char c)
+{
+  #define CTS_BUFSIZE 5
+  static char buffer[CTS_BUFSIZE];
+  if (c == ' ') {
+    buffer[0] = '\\';
+    buffer[1] = 'x';
+    buffer[2] = '2';
+    buffer[3] = '0';
+    buffer[4] = '\0'; // space = 0x20
+  } else if (isspace(c)) {
+    switch (c) {
+    case '\n':
+      buffer[1] = 'n';
+      break;
+    case '\f':
+      buffer[1] = 'n';
+      break;
+    case '\r':
+      buffer[1]= 'r';
+      break;
+    case '\t':
+      buffer[1] = 't';
+      break;
+    case '\v':
+      buffer[1] = 'v';
+      break;
+    }
+    buffer[0] = '\\';
+    buffer[2] = '\0';
+  } else {
+    buffer[0] = c;
+    buffer[1] = '\0';
+  }
+  return buffer;
+}
+
+void fprintc(FILE *f, char c)
+{
+  fprintf(f, "%s", char_to_string(c));
+}
+
+char string_to_char(char *s) {
+  int c;
+  if (s[0] == '\\') {
+    switch (s[1]) {
+    case 'n':
+      return '\n';
+    case 'f':
+      return '\f';
+    case 'r':
+      return '\r';
+    case 't':
+      return '\t';
+    case 'v':
+      return '\v';
+    case 'x':
+      scanf(s + 2, "%x", &c);
+      return (char)c;
+    default:
+      return s[1];
+    }
+  } else {
+    return s[0];
+  }
+}
+
 
 /**
    @brief Remove leading and trailing whitespace and comments from a line.
@@ -98,6 +168,28 @@ static size_t skipws(char *s) {
   return i;
 }
 
+static char **tokenize(char *line, size_t *ntok)
+{
+  #define SEP " \n\t\v\f"
+  size_t alloc = 16;
+  char **buf = calloc(alloc, sizeof(char*));
+
+  buf[0] = strtok(line, SEP);
+  *ntok = 0;
+  while (buf[*ntok] != NULL) {
+    *ntok += 1;
+
+    if (*ntok >= alloc) {
+      alloc *= 2;
+      buf = realloc(buf, alloc * sizeof(char*));
+    }
+
+    buf[*ntok] = strtok(NULL, SEP);
+  }
+  *ntok += 1;
+  return buf;
+}
+
 /**
    @brief Parse and return an instruction from a line.
 
@@ -111,49 +203,32 @@ static instr read_instr(char *line, int lineno)
 {
   // First, we're going to tokenize the string into a statically allocated
   // buffer.  We know we don't need more than like TODO
-  char *tokens[5];
-  size_t i;
-  tokens[0] = line;
-  for (i = 0; i < nelem(tokens)-1; i++) {
-    size_t n = nextws(tokens[i]);
-    if (tokens[i][n] == '\0') {
-      i++;
-      break;
-    } else {
-      tokens[i][n] = '\0';
-      tokens[i+1] = tokens[i] + n + 1;
-      tokens[i+1] += skipws(tokens[i+1]);
-    }
-  }
-
-  if (i == nelem(tokens) - 1) {
-    fprintf(stderr, "%d: too many tokens on one line\n", lineno);
-    exit(1);
-  }
-
+  size_t ntok;
+  char **tokens = tokenize(line, &ntok);
   instr inst = {0};
+
   if (strcmp(tokens[0], Opcodes[Char]) == 0) {
-    if (i != 2) {
+    if (ntok != 2) {
       fprintf(stderr, "line %d: require 2 tokens for char\n", lineno);
       exit(1);
     }
     inst.code = Char;
     inst.c = tokens[1][0];
   } else if (strcmp(tokens[0], Opcodes[Match]) == 0) {
-    if (i != 1) {
+    if (ntok != 1) {
       fprintf(stderr, "line %d: require 1 token for match\n", lineno);
       exit(1);
     }
     inst.code = Match;
   } else if (strcmp(tokens[0], Opcodes[Jump]) == 0) {
-    if (i != 2) {
+    if (ntok != 2) {
       fprintf(stderr, "line %d: require 2 tokens for jump\n", lineno);
       exit(1);
     }
     inst.code = Jump;
     inst.x = (instr*)tokens[1];
   } else if (strcmp(tokens[0], Opcodes[Split]) == 0) {
-    if (i != 3) {
+    if (ntok != 3) {
       fprintf(stderr, "line %d: require 3 tokens for split\n", lineno);
       exit(1);
     }
@@ -161,17 +236,32 @@ static instr read_instr(char *line, int lineno)
     inst.x = (instr*)tokens[1];
     inst.y = (instr*)tokens[2];
   } else if (strcmp(tokens[0], Opcodes[Save]) == 0) {
-    if (i != 2) {
+    if (ntok != 2) {
       fprintf(stderr, "line %d: require 2 tokens for save\n", lineno);
       exit(1);
     }
     inst.code = Save;
     sscanf(tokens[1], "%zu", &inst.s);
   } else if (strcmp(tokens[0], Opcodes[Any]) == 0) {
-    if (i != 1) {
+    if (ntok != 1) {
       fprintf(stderr, "line %d: require 1 token for any\n", lineno);
+      exit(1);
     }
     inst.code = Any;
+  } else if (strcmp(tokens[0], Opcodes[ Range]) == 0 ||
+             strcmp(tokens[0], Opcodes[NRange]) == 0) {
+    if (ntok % 2 == 1) {
+      fprintf(stderr, "line %d, require even number of character tokens\n",
+              lineno);
+      exit(1);
+    }
+    inst.code = strcmp(tokens[0], Opcodes[Range]) == 0 ? Range : NRange;
+    inst.s = (size_t) (ntok - 1) / 2;
+    char *block = calloc(ntok - 1, sizeof(char));
+    inst.x = block;
+    for (size_t i = 0; i < ntok - 1; i++) {
+      block[i] = string_to_char(tokens[i+1]);
+    }
   } else {
     fprintf(stderr, "line %d: unknown opcode \"%s\"\n", lineno, tokens[0]);
   }
@@ -345,7 +435,7 @@ void write_prog(instr *prog, size_t n, FILE *f)
     char *block = (char*) prog[i].x;
     switch (prog[i].code) {
     case Char:
-      fprintf(f, "    char %c\n", prog[i].c);
+      fprintf(f, "    char %s\n", char_to_string(prog[i].c));
       break;
     case Match:
       fprintf(f, "    match\n");
@@ -366,14 +456,16 @@ void write_prog(instr *prog, size_t n, FILE *f)
     case NRange:
       fprintf(f, "    nrange");
       for (size_t j = 0; j < prog[i].s; j++) {
-        fprintf(f, " %c %c", block[2*j], block[2*j + 1]);
+        fprintf(f, " %s", char_to_string(block[2*j]));
+        fprintf(f, " %s", char_to_string(block[2*j + 1]));
       }
       fprintf(f, "\n");
       break;
     case Range:
       fprintf(f, "    range");
       for (size_t j = 0; j < prog[i].s; j++) {
-        fprintf(f, " %c %c", block[2*j], block[2*j + 1]);
+        fprintf(f, " %s", char_to_string(block[2*j]));
+        fprintf(f, " %s", char_to_string(block[2*j + 1]));
       }
       fprintf(f, "\n");
       break;

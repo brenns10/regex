@@ -79,7 +79,7 @@ static void print_tree(parse_tree *tree, int indent)
 
   if (tree->nchildren == 0) {
     // terminal
-    printf("%s:'%c'\n", names[tree->tok.sym], tree->tok.c);
+    printf("%s:'%s'\n", names[tree->tok.sym], char_to_string(tree->tok.c));
   } else {
     printf("%s {\n", ntnames[tree->nt]);
     for (size_t i = 0; i < tree->nchildren; i++) {
