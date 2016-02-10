@@ -84,7 +84,7 @@ void fprintc(FILE *f, char c)
 }
 
 char string_to_char(char *s) {
-  int c;
+  unsigned int c;
   if (s[0] == '\\') {
     switch (s[1]) {
     case 'n':
@@ -98,7 +98,7 @@ char string_to_char(char *s) {
     case 'v':
       return '\v';
     case 'x':
-      scanf(s + 2, "%x", &c);
+      sscanf(s + 2, "%x", &c);
       return (char)c;
     default:
       return s[1];
@@ -225,7 +225,7 @@ static instr read_instr(char *line, int lineno)
     inst.code = Any;
   } else if (strcmp(tokens[0], Opcodes[ Range]) == 0 ||
              strcmp(tokens[0], Opcodes[NRange]) == 0) {
-    if (ntok % 2 == 1) {
+    if (ntok % 2 == 0) {
       fprintf(stderr, "line %d, require even number of character tokens\n",
               lineno);
       exit(1);
@@ -337,10 +337,10 @@ instr *read_prog(char *str, size_t *ninstr)
     rv[codeidx] = read_instr(lines[i], i+1);
 
     // lookup labels and point them correctly
-    if (rv[codeidx].x) {
+    if (rv[codeidx].code == Jump || rv[codeidx].code == Split) {
       rv[codeidx].x = rv + gettarget(labels, labelindices, nlabels, (char*)rv[codeidx].x, i+1);
     }
-    if (rv[codeidx].y) {
+    if (rv[codeidx].code == Split) {
       rv[codeidx].y = rv + gettarget(labels, labelindices, nlabels, (char*)rv[codeidx].y, i+1);
     }
 
