@@ -255,7 +255,7 @@ static instr read_instr(char *line, int lineno)
               lineno);
       exit(1);
     }
-    inst.code = strcmp(tokens[0], Opcodes[Range]) == 0 ? Range : NRange;
+    inst.code = (strcmp(tokens[0], Opcodes[Range]) == 0) ? Range : NRange;
     inst.s = (size_t) (ntok - 1) / 2;
     char *block = calloc(ntok - 1, sizeof(char));
     inst.x = block;
