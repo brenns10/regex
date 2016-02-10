@@ -236,12 +236,21 @@ int main(int argc, char **argv)
     fprintf(stderr, "usage: %s REGEXP string1 [string2 [...]]\n", argv[0]);
     exit(1);
   }
-
-  printf(";; Regex: \"%s\"\n\n", argv[1]);
   size_t n;
-  instr *code = recomp(argv[1], &n);
-  printf(";; BEGIN GENERATED CODE:\n");
-  write_prog(code, n, stdout);
+  instr *code;
+  FILE *in = fopen(argv[1], "r");
+
+  if (in == NULL) {
+    printf(";; Regex: \"%s\"\n\n", argv[1]);
+    code = recomp(argv[1], &n);
+    printf(";; BEGIN GENERATED CODE:\n");
+    write_prog(code, n, stdout);
+  } else {
+    code = fread_prog(in, &n);
+    printf(";; BEGIN READ CODE:\n");
+    write_prog(code, n, stdout);
+  }
+
   int ns = numsaves(code, n);
   printf(";; BEGIN TEST RUNS:\n");
 
