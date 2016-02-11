@@ -17,6 +17,7 @@
 #define SMB_PIKE_REGEX_H
 
 #include <stdio.h>
+#include <unistd.h>
 
 // DEFINITIONS
 
@@ -41,6 +42,10 @@ void free_prog(instr *prog, size_t n);
 
 // parser.c
 instr *recomp(char *regex, size_t *n);
+
+// pike.c
+ssize_t execute(instr *prog, size_t proglen, char *input, size_t **saved);
+int numsaves(instr *code, size_t ncode);
 
 #define nelem(x) (sizeof(x)/sizeof((x)[0]))
 

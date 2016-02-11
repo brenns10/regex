@@ -23,6 +23,7 @@ int main(int argc, char *argv[])
   lex_test();
   parse_test();
   codegen_test();
+  pike_test();
 
   return 0;
 }

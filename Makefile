@@ -50,7 +50,7 @@ PROJECT_NAME="Pike Regex"
 # PROJECT_TYPE - staticlib, dynamiclib, executable
 PROJECT_TYPE=executable
 # PROJECT_MAIN - filename within your source directory that contains main()
-PROJECT_MAIN=pike.c
+PROJECT_MAIN=main.c
 # TARGET - the name you want your target to have (bin/release/[whatgoeshere])
 TARGET=main
 # TEST_TARGET - the name you want your tests to have (probably test)

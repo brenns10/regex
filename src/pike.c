@@ -124,13 +124,25 @@ void addthread(thread_list *threads, instr *pc, size_t *saved, size_t nsave,
   }
 }
 
-void stash(size_t *new, size_t **saved)
+/**
+   @brief "Stash" a list of captures into the "out" pointer.
+   @param new The new list of captures encountered by the Match instruction.
+   @param destination The out pointer where the caller wants the captures.
+ */
+void stash(size_t *new, size_t **destination)
 {
-  if (!saved) return;
-  if (*saved) {
-    free(*saved);
+  if (!destination) {
+    /* If the user wants to discard the captures, they'll pass NULL.  This means
+       we need to get rid of the capture list, or we'll leak the memory. */
+    free(new);
+    return;
   }
-  *saved = new;
+  if (*destination) {
+    /* If we have already stored a capture list, we should free that. */
+    free(*destination);
+  }
+  /* Finally, stash the pointer away. */
+  *destination = new;
 }
 
 ssize_t execute(instr *prog, size_t proglen, char *input, size_t **saved)
@@ -142,6 +154,12 @@ ssize_t execute(instr *prog, size_t proglen, char *input, size_t **saved)
   thread_list temp;
   size_t nsave = 0;
   ssize_t match = -1;
+
+  // Set the out pointer to NULL so that stash() knows whether we've already
+  // stashed away a capture list.
+  if (saved) {
+    *saved = NULL;
+  }
 
   // Need to initialize lastidx to something that will never be used.
   for (size_t i = 0; i < proglen; i++) {
@@ -211,8 +229,6 @@ ssize_t execute(instr *prog, size_t proglen, char *input, size_t **saved)
     next.n = 0;
   }
 
-  
-
   free(curr.t);
   free(next.t);
   return match;
@@ -229,46 +245,4 @@ int numsaves(instr *code, size_t ncode)
     }
   }
   return ns + 1;
-}
-
-int main(int argc, char **argv)
-{
-  if (argc < 3) {
-    fprintf(stderr, "too few arguments\n");
-    fprintf(stderr, "usage: %s REGEXP string1 [string2 [...]]\n", argv[0]);
-    exit(1);
-  }
-  size_t n;
-  instr *code;
-  FILE *in = fopen(argv[1], "r");
-
-  if (in == NULL) {
-    printf(";; Regex: \"%s\"\n\n", argv[1]);
-    code = recomp(argv[1], &n);
-    printf(";; BEGIN GENERATED CODE:\n");
-    write_prog(code, n, stdout);
-  } else {
-    code = fread_prog(in, &n);
-    printf(";; BEGIN READ CODE:\n");
-    write_prog(code, n, stdout);
-  }
-
-  int ns = numsaves(code, n);
-  printf(";; BEGIN TEST RUNS:\n");
-
-  for (int i = 2; i < argc; i++) {
-    size_t *saves = NULL;
-    ssize_t match = execute(code, n, argv[i], &saves);
-    if (match != -1) {
-      printf(";; \"%s\": match(%zd) ", argv[i], match);
-      for (size_t j = 0; j < ns; j += 2) {
-        printf("(%zd, %zd) ", saves[j], saves[j+1]);
-      }
-      printf("\n");
-    } else {
-      printf(";; \"%s\": no match\n", argv[i]);
-    }
-  }
-
-  free_prog(code, n);
 }
