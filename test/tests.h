@@ -17,5 +17,6 @@
 #define REGEX_TEST_H
 
 void parse_test(void);
+void lex_test(void);
 
 #endif//REGEX_TEST_H

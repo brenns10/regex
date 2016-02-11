@@ -20,6 +20,7 @@ int main(int argc, char *argv[])
   (void)argc;
   (void)argv;
 
+  lex_test();
   parse_test();
 
   return 0;

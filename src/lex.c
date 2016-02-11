@@ -53,6 +53,9 @@ void escape(Lexer *l)
   case '.':
     l->tok = (Token){CharSym, '.'};
     break;
+  case '|':
+    l->tok = (Token){CharSym, '|'};
+    break;
   default:
     l->tok = (Token){Special, l->input[l->index]};
     break;
