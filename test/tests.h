@@ -18,5 +18,6 @@
 
 void parse_test(void);
 void lex_test(void);
+void codegen_test(void);
 
 #endif//REGEX_TEST_H

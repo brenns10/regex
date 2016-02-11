@@ -271,10 +271,9 @@ parse_tree *reparse(char *regex)
 
 instr *recomp(char *regex, size_t *n)
 {
-  // Diagnostics - print parse tree.
   parse_tree *tree = reparse(regex);
-  printf(";; PARSE TREE:\n");
-  print_tree(tree, 0);
+  //printf(";; PARSE TREE:\n");
+  //print_tree(tree, 0);
 
   // Generate code from parse tree.
   instr *code = codegen(tree, n);

@@ -159,7 +159,7 @@ static Fragment *term(parse_tree *t, State *s)
       // Special
       fprintf(stderr, "not implemented: term special\n");
     }
-  } else if (t->nchildren == 3 && t->children[0]->tok.sym == RParen) {
+  } else if (t->nchildren == 3 && t->children[0]->tok.sym == LParen) {
     // Parenthesized expression
     f = newfrag(Save, s);
     f->in.s = s->capture++;
@@ -260,9 +260,10 @@ static Fragment *expr(parse_tree *t, State *s)
       a->next = f;
       join(f, b);
       return a;
+    } else {
+      assert(false);
     }
   }
-  return NULL;
 }
 
 static Fragment *sub(parse_tree *tree, State *state)
