@@ -49,7 +49,7 @@ static parse_tree *nonterminal_tree(NonTerminal nt, size_t nchildren)
   return tree;
 }
 
-static void free_tree(parse_tree *tree)
+void free_tree(parse_tree *tree)
 {
   for (size_t i = 0; i < tree->nchildren; i++) {
     free_tree(tree->children[i]);
@@ -94,7 +94,7 @@ static void print_tree(parse_tree *tree, int indent)
   Simple convenience functions for a parser.
  */
 
-static bool accept(Sym s, Lexer *l)
+bool accept(Sym s, Lexer *l)
 {
   if (l->tok.sym == s) {
     nextsym(l);
@@ -103,7 +103,8 @@ static bool accept(Sym s, Lexer *l)
   return false;
 }
 
-static void expect(Sym s, Lexer *l) {
+void expect(Sym s, Lexer *l)
+{
   if (l->tok.sym == s) {
     nextsym(l);
     return;
@@ -112,17 +113,7 @@ static void expect(Sym s, Lexer *l) {
   exit(1);
 }
 
-/*
-  Recursive descent parser (main functions)
- */
-
-static parse_tree *TERM(Lexer *l);
-static parse_tree *EXPR(Lexer *l);
-static parse_tree *REGEX(Lexer *l);
-static parse_tree *CLASS(Lexer *l);
-static parse_tree *SUB(Lexer *l);
-
-static parse_tree *TERM(Lexer *l)
+parse_tree *TERM(Lexer *l)
 {
   if (accept(CharSym, l) || accept(Dot, l) || accept(Special, l)) {
     parse_tree *result = nonterminal_tree(TERMnt, 1);
@@ -158,7 +149,7 @@ static parse_tree *TERM(Lexer *l)
   }
 }
 
-static parse_tree *EXPR(Lexer *l)
+parse_tree *EXPR(Lexer *l)
 {
   parse_tree *result = nonterminal_tree(EXPRnt, 1);
   result->children[0] = TERM(l);
@@ -173,7 +164,7 @@ static parse_tree *EXPR(Lexer *l)
   return result;
 }
 
-static parse_tree *SUB(Lexer *l)
+parse_tree *SUB(Lexer *l)
 {
   parse_tree *result = nonterminal_tree(SUBnt, 1);
   parse_tree *orig = result, *prev = result;
@@ -194,20 +185,20 @@ static parse_tree *SUB(Lexer *l)
   return orig;
 }
 
-static parse_tree *REGEX(Lexer *l)
+parse_tree *REGEX(Lexer *l)
 {
   parse_tree *result = nonterminal_tree(REGEXnt, 1);
   result->children[0] = SUB(l);
 
   if (accept(Pipe, l)) {
     result->nchildren = 3;
-    result->children[1] = terminal_tree(l->tok);
+    result->children[1] = terminal_tree(l->prev);
     result->children[2] = REGEX(l);
   }
   return result;
 }
 
-static parse_tree *CLASS(Lexer *l)
+parse_tree *CLASS(Lexer *l)
 {
   // this guy isn't really implemented yet
   parse_tree *result = nonterminal_tree(CLASSnt, 0), *curr, *prev;
@@ -259,7 +250,7 @@ static parse_tree *CLASS(Lexer *l)
   return result; // not yet implemented
 }
 
-instr *recomp(char *regex, size_t *n)
+parse_tree *reparse(char *regex)
 {
   Lexer l;
 
@@ -267,14 +258,21 @@ instr *recomp(char *regex, size_t *n)
   l.input = regex;
   l.index = 0;
   l.nbuf = 0;
+  l.tok = (Token){0};
 
   // Create a parse tree!
-  printf(";; TOKENS:\n");
+  //printf(";; TOKENS:\n");
   nextsym(&l);
   parse_tree *tree = REGEX(&l);
   expect(Eof, &l);
 
+  return tree;
+}
+
+instr *recomp(char *regex, size_t *n)
+{
   // Diagnostics - print parse tree.
+  parse_tree *tree = reparse(regex);
   printf(";; PARSE TREE:\n");
   print_tree(tree, 0);
 

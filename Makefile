@@ -54,13 +54,13 @@ PROJECT_MAIN=pike.c
 # TARGET - the name you want your target to have (bin/release/[whatgoeshere])
 TARGET=main
 # TEST_TARGET - the name you want your tests to have (probably test)
-TEST_TARGET=
+TEST_TARGET=test
 # STATIC_LIBS - path to any static libs you need.  you may need to make a rule
 # to generate them from subprojects.  Leave this blank if you don't have any.
-STATIC_LIBS=
+STATIC_LIBS=libstephen/bin/release/libstephen.a
 # EXTRA_INCLUDES - folders that should also be include directories (say, for
 # static libs?).  You can leave this blank if you don't have any.
-EXTRA_INCLUDES=
+EXTRA_INCLUDES=libstephen/inc
 
 # --- DIRECTORY STRUCTURE: This structure is highly recommended, but you can
 # change it.  The most important thing is that *none* of these directories are
@@ -152,6 +152,10 @@ clean_docs:
 
 clean_cov:
 	rm -rf $(COVERAGE_DIR)
+
+# STATIC LIBS: libstephen
+libstephen/bin/release/libstephen.a:
+	make -C libstephen
 
 # RULE TO BUILD YOUR MAIN TARGET HERE: (you may have to edit this, but it it
 # configurable).

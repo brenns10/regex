@@ -73,8 +73,8 @@ Token nextsym(Lexer *l)
       l->buf[i] = l->buf[i+1];
     }
     l->nbuf--;
-    printf(";; nextsym(): unbuffering {%s, '%s'}\n", names[l->tok.sym],
-           char_to_string(l->tok.c));
+    //printf(";; nextsym(): unbuffering {%s, '%s'}\n", names[l->tok.sym],
+    //       char_to_string(l->tok.c));
     return l->tok;
   }
 
@@ -124,7 +124,7 @@ Token nextsym(Lexer *l)
     break;
   }
   l->index++;
-  printf(";; nextsym(): {%s, '%s'}\n", names[l->tok.sym], char_to_string(l->tok.c));
+  //printf(";; nextsym(): {%s, '%s'}\n", names[l->tok.sym], char_to_string(l->tok.c));
   return l->tok;
 }
 
@@ -135,7 +135,7 @@ void unget(Token t, Lexer *l)
     exit(1);
   }
 
-  printf(";; unget(): buffering {%s, '%s'}\n", names[t.sym], char_to_string(t.c));
+  //printf(";; unget(): buffering {%s, '%s'}\n", names[t.sym], char_to_string(t.c));
 
   for (int i = l->nbuf - 1; i >= 0; i--) {
     l->buf[i+1] = l->buf[i];
