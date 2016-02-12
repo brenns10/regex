@@ -72,6 +72,7 @@ thus far:
 - Metacharacters within character classes.
 - Curly braces to specify particular amounts of repetition.
 - Hyphens and carets in normal regex syntax.
+- Special character classes.
 
 How It Works
 ------------
