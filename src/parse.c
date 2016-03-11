@@ -33,23 +33,23 @@ char *ntnames[] = {
   Convenience functions for parse trees.
  */
 
-static parse_tree *terminal_tree(Token tok)
+static PTree *terminal_tree(Token tok)
 {
-  parse_tree *tree = calloc(1, sizeof(parse_tree));
+  PTree *tree = calloc(1, sizeof(PTree));
   tree->nchildren = 0;
   tree->tok = tok;
   return tree;
 }
 
-static parse_tree *nonterminal_tree(NonTerminal nt, size_t nchildren)
+static PTree *nonterminal_tree(NTSym nt, size_t nchildren)
 {
-  parse_tree *tree = calloc(1, sizeof(parse_tree));
+  PTree *tree = calloc(1, sizeof(PTree));
   tree->nchildren = nchildren;
   tree->nt = nt;
   return tree;
 }
 
-void free_tree(parse_tree *tree)
+void free_tree(PTree *tree)
 {
   for (size_t i = 0; i < tree->nchildren; i++) {
     free_tree(tree->children[i]);
@@ -69,7 +69,7 @@ static void print_indent(int indent)
   }
 }
 
-static void print_tree(parse_tree *tree, int indent)
+static void print_tree(PTree *tree, int indent)
 {
   print_indent(indent);
   if (tree == NULL) {
@@ -94,7 +94,7 @@ static void print_tree(parse_tree *tree, int indent)
   Simple convenience functions for a parser.
  */
 
-bool accept(Sym s, Lexer *l)
+bool accept(TSym s, Lexer *l)
 {
   if (l->tok.sym == s) {
     nextsym(l);
@@ -103,7 +103,7 @@ bool accept(Sym s, Lexer *l)
   return false;
 }
 
-void expect(Sym s, Lexer *l)
+void expect(TSym s, Lexer *l)
 {
   if (l->tok.sym == s) {
     nextsym(l);
@@ -113,21 +113,21 @@ void expect(Sym s, Lexer *l)
   exit(1);
 }
 
-parse_tree *TERM(Lexer *l)
+PTree *TERM(Lexer *l)
 {
   if (accept(CharSym, l) || accept(Dot, l) || accept(Special, l)) {
-    parse_tree *result = nonterminal_tree(TERMnt, 1);
+    PTree *result = nonterminal_tree(TERMnt, 1);
     result->children[0] = terminal_tree(l->prev);
     return result;
   } else if (accept(LParen, l)) {
-    parse_tree *result = nonterminal_tree(TERMnt, 3);
+    PTree *result = nonterminal_tree(TERMnt, 3);
     result->children[0] = terminal_tree(l->prev);
     result->children[1] = REGEX(l);
     expect(RParen, l);
     result->children[2] = terminal_tree(l->prev);
     return result;
   } else if (accept(LBracket, l)) {
-    parse_tree *result;
+    PTree *result;
     if (accept(Caret, l)) {
       result = nonterminal_tree(TERMnt, 4);
       result->children[0] = terminal_tree((Token){LBracket, '['});
@@ -149,9 +149,9 @@ parse_tree *TERM(Lexer *l)
   }
 }
 
-parse_tree *EXPR(Lexer *l)
+PTree *EXPR(Lexer *l)
 {
-  parse_tree *result = nonterminal_tree(EXPRnt, 1);
+  PTree *result = nonterminal_tree(EXPRnt, 1);
   result->children[0] = TERM(l);
   if (accept(Plus, l) || accept(Star, l) || accept(Question, l)) {
     result->nchildren++;
@@ -164,10 +164,10 @@ parse_tree *EXPR(Lexer *l)
   return result;
 }
 
-parse_tree *SUB(Lexer *l)
+PTree *SUB(Lexer *l)
 {
-  parse_tree *result = nonterminal_tree(SUBnt, 1);
-  parse_tree *orig = result, *prev = result;
+  PTree *result = nonterminal_tree(SUBnt, 1);
+  PTree *orig = result, *prev = result;
 
   while (l->tok.sym != Eof && l->tok.sym != RParen && l->tok.sym != Pipe) { // seems like a bit of a hack
     result->children[0] = EXPR(l);
@@ -185,9 +185,9 @@ parse_tree *SUB(Lexer *l)
   return orig;
 }
 
-parse_tree *REGEX(Lexer *l)
+PTree *REGEX(Lexer *l)
 {
-  parse_tree *result = nonterminal_tree(REGEXnt, 1);
+  PTree *result = nonterminal_tree(REGEXnt, 1);
   result->children[0] = SUB(l);
 
   if (accept(Pipe, l)) {
@@ -198,10 +198,10 @@ parse_tree *REGEX(Lexer *l)
   return result;
 }
 
-parse_tree *CLASS(Lexer *l)
+PTree *CLASS(Lexer *l)
 {
   // this guy isn't really implemented yet
-  parse_tree *result = nonterminal_tree(CLASSnt, 0), *curr, *prev;
+  PTree *result = nonterminal_tree(CLASSnt, 0), *curr, *prev;
   Token t1, t2, t3;
   curr = result;
 
@@ -250,7 +250,7 @@ parse_tree *CLASS(Lexer *l)
   return result; // not yet implemented
 }
 
-parse_tree *reparse(char *regex)
+PTree *reparse(char *regex)
 {
   Lexer l;
 
@@ -263,7 +263,7 @@ parse_tree *reparse(char *regex)
   // Create a parse tree!
   //printf(";; TOKENS:\n");
   nextsym(&l);
-  parse_tree *tree = REGEX(&l);
+  PTree *tree = REGEX(&l);
   expect(Eof, &l);
 
   return tree;
@@ -271,7 +271,7 @@ parse_tree *reparse(char *regex)
 
 instr *recomp(char *regex, size_t *n)
 {
-  parse_tree *tree = reparse(regex);
+  PTree *tree = reparse(regex);
   //printf(";; PARSE TREE:\n");
   //print_tree(tree, 0);
 

@@ -132,13 +132,13 @@ static void freefraglist(Fragment *f)
   }
 }
 
-static Fragment *regex(parse_tree *t, State *s);
-static Fragment *term(parse_tree *t, State *s);
-static Fragment *expr(parse_tree *t, State *s);
-static Fragment *class(parse_tree *t, State *s, bool is_negative);
-static Fragment *sub(parse_tree *t, State *s);
+static Fragment *regex(PTree *t, State *s);
+static Fragment *term(PTree *t, State *s);
+static Fragment *expr(PTree *t, State *s);
+static Fragment *class(PTree *t, State *s, bool is_negative);
+static Fragment *sub(PTree *t, State *s);
 
-static Fragment *term(parse_tree *t, State *s)
+static Fragment *term(PTree *t, State *s)
 {
   Fragment *f = NULL;
 
@@ -179,7 +179,7 @@ static Fragment *term(parse_tree *t, State *s)
   return f;
 }
 
-static Fragment *expr(parse_tree *t, State *s)
+static Fragment *expr(PTree *t, State *s)
 {
   Fragment *f = NULL, *a = NULL, *b = NULL, *c = NULL;
 
@@ -266,7 +266,7 @@ static Fragment *expr(parse_tree *t, State *s)
   }
 }
 
-static Fragment *sub(parse_tree *tree, State *state)
+static Fragment *sub(PTree *tree, State *state)
 {
   assert(tree->nt == SUBnt);
   Fragment *e = expr(tree->children[0], state);
@@ -281,7 +281,7 @@ static Fragment *sub(parse_tree *tree, State *state)
   return e;
 }
 
-static Fragment *regex(parse_tree *tree, State *state)
+static Fragment *regex(PTree *tree, State *state)
 {
   assert(tree->nt == REGEXnt);
   Fragment *s = sub(tree->children[0], state);
@@ -316,10 +316,10 @@ static Fragment *regex(parse_tree *tree, State *state)
   return s;
 }
 
-static Fragment *class(parse_tree *tree, State *state, bool is_negative)
+static Fragment *class(PTree *tree, State *state, bool is_negative)
 {
   size_t nranges = 0;
-  parse_tree *curr;
+  PTree *curr;
   Fragment *f;
 
   for (curr = tree; curr->nt == CLASSnt; curr = curr->children[curr->nchildren-1]) {
@@ -366,7 +366,7 @@ static Fragment *class(parse_tree *tree, State *state, bool is_negative)
   return f;
 }
 
-instr *codegen(parse_tree *tree, size_t *n)
+instr *codegen(PTree *tree, size_t *n)
 {
   // Generate code.
   State s = {0, 0};

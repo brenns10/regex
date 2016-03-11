@@ -28,7 +28,7 @@ static int test_TERM_CharSym(void)
   l.nbuf = 0;
 
   nextsym(&l);
-  parse_tree *tree = TERM(&l);
+  PTree *tree = TERM(&l);
   expect(Eof, &l);
 
   TEST_ASSERT(tree != NULL);
@@ -50,7 +50,7 @@ static int test_TERM_Dot(void)
   l.nbuf = 0;
 
   nextsym(&l);
-  parse_tree *tree = TERM(&l);
+  PTree *tree = TERM(&l);
   expect(Eof, &l);
 
   TEST_ASSERT(tree != NULL);
@@ -72,7 +72,7 @@ static int test_TERM_Special(void)
   l.nbuf = 0;
 
   nextsym(&l);
-  parse_tree *tree = TERM(&l);
+  PTree *tree = TERM(&l);
   expect(Eof, &l);
 
   TEST_ASSERT(tree != NULL);
@@ -94,7 +94,7 @@ static int test_TERM_Subexpr(void)
   l.nbuf = 0;
 
   nextsym(&l);
-  parse_tree *tree = TERM(&l);
+  PTree *tree = TERM(&l);
   expect(Eof, &l);
 
   TEST_ASSERT(tree != NULL);
@@ -115,7 +115,7 @@ static int test_TERM_Class(void)
   l.nbuf = 0;
 
   nextsym(&l);
-  parse_tree *tree = TERM(&l);
+  PTree *tree = TERM(&l);
   expect(Eof, &l);
 
   TEST_ASSERT(tree != NULL);
@@ -136,7 +136,7 @@ static int test_TERM_NClass(void)
   l.nbuf = 0;
 
   nextsym(&l);
-  parse_tree *tree = TERM(&l);
+  PTree *tree = TERM(&l);
   expect(Eof, &l);
 
   TEST_ASSERT(tree != NULL);
@@ -157,7 +157,7 @@ static int test_EXPR_Term(void)
   l.nbuf = 0;
 
   nextsym(&l);
-  parse_tree *tree = EXPR(&l);
+  PTree *tree = EXPR(&l);
   expect(Eof, &l);
 
   TEST_ASSERT(tree != NULL);
@@ -179,7 +179,7 @@ static int test_EXPR_Plus(void)
   l.nbuf = 0;
 
   nextsym(&l);
-  parse_tree *tree = EXPR(&l);
+  PTree *tree = EXPR(&l);
   expect(Eof, &l);
 
   TEST_ASSERT(tree != NULL);
@@ -202,7 +202,7 @@ static int test_EXPR_PlusQuestion(void)
   l.nbuf = 0;
 
   nextsym(&l);
-  parse_tree *tree = EXPR(&l);
+  PTree *tree = EXPR(&l);
   expect(Eof, &l);
 
   TEST_ASSERT(tree != NULL);
@@ -226,7 +226,7 @@ static int test_EXPR_Star(void)
   l.nbuf = 0;
 
   nextsym(&l);
-  parse_tree *tree = EXPR(&l);
+  PTree *tree = EXPR(&l);
   expect(Eof, &l);
 
   TEST_ASSERT(tree != NULL);
@@ -249,7 +249,7 @@ static int test_EXPR_StarQuestion(void)
   l.nbuf = 0;
 
   nextsym(&l);
-  parse_tree *tree = EXPR(&l);
+  PTree *tree = EXPR(&l);
   expect(Eof, &l);
 
   TEST_ASSERT(tree != NULL);
@@ -273,7 +273,7 @@ static int test_EXPR_Question(void)
   l.nbuf = 0;
 
   nextsym(&l);
-  parse_tree *tree = EXPR(&l);
+  PTree *tree = EXPR(&l);
   expect(Eof, &l);
 
   TEST_ASSERT(tree != NULL);
@@ -296,7 +296,7 @@ static int test_EXPR_QuestionQuestion(void)
   l.nbuf = 0;
 
   nextsym(&l);
-  parse_tree *tree = EXPR(&l);
+  PTree *tree = EXPR(&l);
   expect(Eof, &l);
 
   TEST_ASSERT(tree != NULL);
@@ -320,7 +320,7 @@ static int test_SUB_Normal(void)
   l.nbuf = 0;
 
   nextsym(&l);
-  parse_tree *tree = SUB(&l);
+  PTree *tree = SUB(&l);
   expect(Eof, &l);
 
   TEST_ASSERT(tree != NULL);
@@ -341,7 +341,7 @@ static int test_SUB_Concat(void)
   l.nbuf = 0;
 
   nextsym(&l);
-  parse_tree *tree = SUB(&l);
+  PTree *tree = SUB(&l);
   expect(Eof, &l);
 
   TEST_ASSERT(tree != NULL);
@@ -366,7 +366,7 @@ static int test_REGEX_Normal(void)
   l.nbuf = 0;
 
   nextsym(&l);
-  parse_tree *tree = REGEX(&l);
+  PTree *tree = REGEX(&l);
   expect(Eof, &l);
 
   TEST_ASSERT(tree != NULL);
@@ -388,7 +388,7 @@ static int test_REGEX_Alternate(void)
   l.nbuf = 0;
 
   nextsym(&l);
-  parse_tree *tree = REGEX(&l);
+  PTree *tree = REGEX(&l);
   expect(Eof, &l);
 
   TEST_ASSERT(tree != NULL);
@@ -414,7 +414,7 @@ static int test_CLASS_range(void)
   l.nbuf = 0;
 
   nextsym(&l);
-  parse_tree *tree = CLASS(&l);
+  PTree *tree = CLASS(&l);
   expect(Eof, &l);
 
   TEST_ASSERT(tree != NULL);
@@ -438,7 +438,7 @@ static int test_CLASS_range_range(void)
   l.nbuf = 0;
 
   nextsym(&l);
-  parse_tree *tree = CLASS(&l);
+  PTree *tree = CLASS(&l);
   expect(Eof, &l);
 
   TEST_ASSERT(tree != NULL);
@@ -468,7 +468,7 @@ static int test_CLASS_single(void)
   l.nbuf = 0;
 
   nextsym(&l);
-  parse_tree *tree = CLASS(&l);
+  PTree *tree = CLASS(&l);
   expect(Eof, &l);
 
   TEST_ASSERT(tree != NULL);
@@ -490,7 +490,7 @@ static int test_CLASS_single_hyphen(void)
   l.nbuf = 0;
 
   nextsym(&l);
-  parse_tree *tree = CLASS(&l);
+  PTree *tree = CLASS(&l);
   expect(Eof, &l);
 
   TEST_ASSERT(tree != NULL);
@@ -508,7 +508,7 @@ static int test_CLASS_single_hyphen(void)
 
 static int test_reparse(void)
 {
-  parse_tree *tree = reparse("a+|b*");
+  PTree *tree = reparse("a+|b*");
 
   TEST_ASSERT(tree != NULL);
   TEST_ASSERT(tree->nt == REGEXnt);

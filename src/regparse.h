@@ -23,11 +23,11 @@
 /**
    @brief Types of terminal symbols!
  */
-enum Sym {
+enum TSym {
   CharSym, Special, Eof, LParen, RParen, LBracket, RBracket, Plus, Minus,
   Star, Question, Caret, Pipe, Dot
 };
-typedef enum Sym Sym;
+typedef enum TSym TSym;
 
 // Lookup the name of a terminal symbol.
 extern char *names[];
@@ -35,10 +35,10 @@ extern char *names[];
 /**
    @brief Types of non-terminal symbols!
  */
-enum NonTerminal {
+enum NTSym {
   TERMnt, EXPRnt, REGEXnt, CLASSnt, SUBnt
 };
-typedef enum NonTerminal NonTerminal;
+typedef enum NTSym NTSym;
 
 // Lookup the name of a non-terminal symbol.
 extern char *ntnames[];
@@ -54,21 +54,22 @@ extern char *ntnames[];
  */
 typedef struct Token Token;
 struct Token {
-  Sym sym;
+  TSym sym;
   char c;
 };
 
 /**
    @brief Tree data structure to store information parsed out of a regex.
  */
-typedef struct parse_tree parse_tree;
-struct parse_tree {
-  size_t nchildren; // 0 -> terminal, >0 -> nonterminal
+typedef struct PTree PTree;
+struct PTree {
+  unsigned short nchildren; // a nonterminal symbol may have no children
+  unsigned short production; // 0 -> terminal, anything else -> nonterminal
 
-  NonTerminal nt;
+  NTSym nt;
   Token tok;
 
-  struct parse_tree *children[4];
+  struct PTree *children[4];
 };
 
 #define LEXER_BUFSIZE 4
@@ -88,20 +89,20 @@ struct Lexer {
 void escape(Lexer *l);
 Token nextsym(Lexer *l);
 void unget(Token t, Lexer *l);
-instr *codegen(parse_tree *tree, size_t *n);
+instr *codegen(PTree *tree, size_t *n);
 
 /* Parsing */
-bool accept(Sym s, Lexer *l);
-void expect(Sym s, Lexer *l);
-parse_tree *TERM(Lexer *l);
-parse_tree *EXPR(Lexer *l);
-parse_tree *REGEX(Lexer *l);
-parse_tree *CLASS(Lexer *l);
-parse_tree *SUB(Lexer *l);
-parse_tree *reparse(char *regex);
+bool accept(TSym s, Lexer *l);
+void expect(TSym s, Lexer *l);
+PTree *TERM(Lexer *l);
+PTree *EXPR(Lexer *l);
+PTree *REGEX(Lexer *l);
+PTree *CLASS(Lexer *l);
+PTree *SUB(Lexer *l);
+PTree *reparse(char *regex);
 
 /* Utitlites */
-void free_tree(parse_tree *tree);
+void free_tree(PTree *tree);
 char *char_to_string(char c);
 
 #endif // SMB_REGEX_REGPARSE_H
