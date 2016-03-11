@@ -66,13 +66,21 @@ thus far:
   brackets).
 - Parenthesized sub-expressions.  These also capture.
 - Alternation (that is, the pipe operator, for either or).
+- Metacharacters within character classes are processed like normal characters.
+- Hyphens and carets in normal regex syntax are processed like normal
+  characters.
 
 ### Future
 
-- Metacharacters within character classes.
+Regex features:
+
 - Curly braces to specify particular amounts of repetition.
-- Hyphens and carets in normal regex syntax.
 - Special character classes.
+
+Code features:
+
+- Error handling which doesn't involve `fprintf(stderr...` followed by
+  `exit(EXIT_FAILURE)`.
 
 How It Works
 ------------

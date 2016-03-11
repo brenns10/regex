@@ -145,8 +145,8 @@ static Fragment *term(PTree *t, State *s)
   assert(t->nt == TERMnt);
 
   if (t->production == 1) {
-    // Either character or special
-    if (t->children[0]->tok.sym == CharSym) {
+    if (t->children[0]->tok.sym == CharSym || t->children[0]->tok.sym == Caret
+        || t->children[0]->tok.sym == Minus) {
       // Character
       f = newfrag(Char, s);
       f->in.c = t->children[0]->tok.c;

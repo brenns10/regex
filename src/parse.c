@@ -117,7 +117,8 @@ void expect(TSym s, Lexer *l)
 
 PTree *TERM(Lexer *l)
 {
-  if (accept(CharSym, l) || accept(Dot, l) || accept(Special, l)) {
+  if (accept(CharSym, l) || accept(Dot, l) || accept(Special, l) ||
+      accept(Caret, l) || accept(Minus, l)) {
     PTree *result = nonterminal_tree(TERMnt, 1);
     result->children[0] = terminal_tree(l->prev);
     result->production = 1;
@@ -203,6 +204,18 @@ PTree *REGEX(Lexer *l)
   return result;
 }
 
+bool CCHAR(Lexer *l)
+{
+  TSym acceptable[] = {CharSym, Dot, LParen, RParen, Plus, Star, Question, Pipe};
+  for (size_t i = 0; i < nelem(acceptable); i++) {
+    if (accept(acceptable[i], l)) {
+      l->prev.sym = CharSym;
+      return true;
+    }
+  }
+  return false;
+}
+
 PTree *CLASS(Lexer *l)
 {
   PTree *result = nonterminal_tree(CLASSnt, 0), *curr, *prev;
@@ -210,12 +223,12 @@ PTree *CLASS(Lexer *l)
   curr = result;
 
   while (true) {
-    if (accept(CharSym, l)) {
+    if (CCHAR(l)) {
       prev = curr;
       t1 = l->prev;
       if (accept(Minus, l)) {
         t2 = l->prev;
-        if (accept(CharSym, l)) {
+        if (CCHAR(l)) {
           t3 = l->prev;
           // We have ourselves a range!  Parse it.
           curr->children[0] = terminal_tree(t1);

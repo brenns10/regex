@@ -39,16 +39,18 @@ Here is the grammar I created:
         (-)-> TERM ?
         (-)-> TERM ? ?
 
-  TERM  (1)-> char <OR> . <OR> special
+  TERM  (1)-> char <OR> . <OR> - <OR> ^ <OR> special
         (2)-> ( REGEX )
         (3)-> [ CLASS ]
         (4)-> [ ^ CLASS ]
 
-  CLASS (1)-> char - char CLASS
-        (2)-> char - char
-        (3)-> char CLASS
-        (4)-> char
+  CLASS (1)-> CCHAR - CCHAR CLASS
+        (2)-> CCHAR - CCHAR
+        (3)-> CCHAR CLASS
+        (4)-> CCHAR
         (5)-> -
+
+  CCHAR (-)-> char <or> . <OR> ( <OR> ) <OR> + <OR> * <OR> ? <OR> |
 ```
 
 The numbers label the production number, which is actually recorded in the parse

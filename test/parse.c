@@ -41,6 +41,50 @@ static int test_TERM_CharSym(void)
   return 0;
 }
 
+static int test_TERM_Minus(void)
+{
+  Lexer l;
+  l.tok = (Token){0};
+  l.input = "-";
+  l.index = 0;
+  l.nbuf = 0;
+
+  nextsym(&l);
+  PTree *tree = TERM(&l);
+  expect(Eof, &l);
+
+  TEST_ASSERT(tree != NULL);
+  TEST_ASSERT(tree->nt == TERMnt);
+  TEST_ASSERT(tree->nchildren == 1);
+  TEST_ASSERT(tree->children[0]->tok.sym == Minus);
+  TEST_ASSERT(tree->children[0]->tok.c == '-');
+
+  free_tree(tree);
+  return 0;
+}
+
+static int test_TERM_Caret(void)
+{
+  Lexer l;
+  l.tok = (Token){0};
+  l.input = "^";
+  l.index = 0;
+  l.nbuf = 0;
+
+  nextsym(&l);
+  PTree *tree = TERM(&l);
+  expect(Eof, &l);
+
+  TEST_ASSERT(tree != NULL);
+  TEST_ASSERT(tree->nt == TERMnt);
+  TEST_ASSERT(tree->nchildren == 1);
+  TEST_ASSERT(tree->children[0]->tok.sym == Caret);
+  TEST_ASSERT(tree->children[0]->tok.c == '^');
+
+  free_tree(tree);
+  return 0;
+}
+
 static int test_TERM_Dot(void)
 {
   Lexer l;
@@ -463,23 +507,26 @@ static int test_CLASS_range_range(void)
 
 static int test_CLASS_single(void)
 {
-  Lexer l;
-  l.tok = (Token){0};
-  l.input = "a";
-  l.index = 0;
-  l.nbuf = 0;
+  char *accept[] = {".", "+", "*", "?", "(", ")", "|"};
+  for (size_t i = 0; i < nelem(accept); i++) {
+    Lexer l;
+    l.tok = (Token){0};
+    l.input = accept[i];
+    l.index = 0;
+    l.nbuf = 0;
 
-  nextsym(&l);
-  PTree *tree = CLASS(&l);
-  expect(Eof, &l);
+    nextsym(&l);
+    PTree *tree = CLASS(&l);
+    expect(Eof, &l);
 
-  TEST_ASSERT(tree != NULL);
-  TEST_ASSERT(tree->nt == CLASSnt);
-  TEST_ASSERT(tree->nchildren == 1);
-  TEST_ASSERT(tree->children[0]->tok.sym == CharSym);
-  TEST_ASSERT(tree->children[0]->tok.c == 'a');
+    TEST_ASSERT(tree != NULL);
+    TEST_ASSERT(tree->nt == CLASSnt);
+    TEST_ASSERT(tree->nchildren == 1);
+    TEST_ASSERT(tree->children[0]->tok.sym == CharSym);
+    TEST_ASSERT(tree->children[0]->tok.c == accept[i][0]);
 
-  free_tree(tree);
+    free_tree(tree);
+  }
   return 0;
 }
 
@@ -547,6 +594,12 @@ void parse_test(void)
 
   smb_ut_test *TERM_CharSym = su_create_test("TERM_CharSym", test_TERM_CharSym);
   su_add_test(group, TERM_CharSym);
+
+  smb_ut_test *TERM_Minus = su_create_test("TERM_Minus", test_TERM_Minus);
+  su_add_test(group, TERM_Minus);
+
+  smb_ut_test *TERM_Caret = su_create_test("TERM_Caret", test_TERM_Caret);
+  su_add_test(group, TERM_Caret);
 
   smb_ut_test *TERM_Dot = su_create_test("TERM_Dot", test_TERM_Dot);
   su_add_test(group, TERM_Dot);
