@@ -144,7 +144,7 @@ static Fragment *term(PTree *t, State *s)
 
   assert(t->nt == TERMnt);
 
-  if (t->nchildren == 1) {
+  if (t->production == 1) {
     // Either character or special
     if (t->children[0]->tok.sym == CharSym) {
       // Character
@@ -159,7 +159,7 @@ static Fragment *term(PTree *t, State *s)
       // Special
       fprintf(stderr, "not implemented: term special\n");
     }
-  } else if (t->nchildren == 3 && t->children[0]->tok.sym == LParen) {
+  } else if (t->production == 2) {
     // Parenthesized expression
     f = newfrag(Save, s);
     f->in.s = s->capture++;
@@ -170,11 +170,7 @@ static Fragment *term(PTree *t, State *s)
     join(f, n);
   } else {
     // Character class
-    if (t->nchildren == 3) {
-      f = class(t->children[1], s, false);
-    } else {
-      f = class(t->children[2], s, true);
-    }
+    f = class(t->children[1], s, (t->production == 4));
   }
   return f;
 }
@@ -339,24 +335,14 @@ static Fragment *class(PTree *tree, State *state, bool is_negative)
   curr = tree;
   nranges = 0;
   while (curr->nt == CLASSnt) {
-    if (curr->children[curr->nchildren-1]->nt == CLASSnt) {
-      // Last one is another class
-      if (curr->nchildren == 2) {
-        block[2*nranges] = curr->children[0]->tok.c;
-        block[2*nranges+1] = curr->children[0]->tok.c;
-      } else { // 3
-        block[2*nranges] = curr->children[0]->tok.c;
-        block[2*nranges+1] = curr->children[1]->tok.c;
-      }
+    if (curr->production == 1 || curr->production == 2) {
+      // Range
+      block[2*nranges] = curr->children[0]->tok.c;
+      block[2*nranges+1] = curr->children[1]->tok.c;
     } else {
-      // No character class following.
-      if (curr->nchildren == 1) {
-        block[2*nranges] = curr->children[0]->tok.c;
-        block[2*nranges+1] = curr->children[0]->tok.c;
-      } else { // 2
-        block[2*nranges] = curr->children[0]->tok.c;
-        block[2*nranges+1] = curr->children[1]->tok.c;
-      }
+      // Single
+      block[2*nranges] = curr->children[0]->tok.c;
+      block[2*nranges+1] = curr->children[0]->tok.c;
     }
     curr = curr->children[curr->nchildren-1];
     nranges++;

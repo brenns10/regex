@@ -121,6 +121,7 @@ static int test_TERM_Class(void)
   TEST_ASSERT(tree != NULL);
   TEST_ASSERT(tree->nt == TERMnt);
   TEST_ASSERT(tree->nchildren == 3);
+  TEST_ASSERT(tree->production == 3);
   TEST_ASSERT(tree->children[1]->nt == CLASSnt);
 
   free_tree(tree);
@@ -141,8 +142,9 @@ static int test_TERM_NClass(void)
 
   TEST_ASSERT(tree != NULL);
   TEST_ASSERT(tree->nt == TERMnt);
-  TEST_ASSERT(tree->nchildren == 4);
-  TEST_ASSERT(tree->children[2]->nt == CLASSnt);
+  TEST_ASSERT(tree->nchildren == 3);
+  TEST_ASSERT(tree->production == 4);
+  TEST_ASSERT(tree->children[1]->nt == CLASSnt);
 
   free_tree(tree);
   return 0;

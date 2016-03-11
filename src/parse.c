@@ -37,6 +37,7 @@ static PTree *terminal_tree(Token tok)
 {
   PTree *tree = calloc(1, sizeof(PTree));
   tree->nchildren = 0;
+  tree->production = 0; // marks this as terminal
   tree->tok = tok;
   return tree;
 }
@@ -45,6 +46,7 @@ static PTree *nonterminal_tree(NTSym nt, size_t nchildren)
 {
   PTree *tree = calloc(1, sizeof(PTree));
   tree->nchildren = nchildren;
+  tree->production = 1; // update this on return.
   tree->nt = nt;
   return tree;
 }
@@ -118,6 +120,7 @@ PTree *TERM(Lexer *l)
   if (accept(CharSym, l) || accept(Dot, l) || accept(Special, l)) {
     PTree *result = nonterminal_tree(TERMnt, 1);
     result->children[0] = terminal_tree(l->prev);
+    result->production = 1;
     return result;
   } else if (accept(LParen, l)) {
     PTree *result = nonterminal_tree(TERMnt, 3);
@@ -125,22 +128,24 @@ PTree *TERM(Lexer *l)
     result->children[1] = REGEX(l);
     expect(RParen, l);
     result->children[2] = terminal_tree(l->prev);
+    result->production = 2;
     return result;
   } else if (accept(LBracket, l)) {
     PTree *result;
     if (accept(Caret, l)) {
-      result = nonterminal_tree(TERMnt, 4);
+      result = nonterminal_tree(TERMnt, 3);
       result->children[0] = terminal_tree((Token){LBracket, '['});
-      result->children[1] = terminal_tree(l->prev);
-      result->children[2] = CLASS(l);
+      result->children[1] = CLASS(l);
       expect(RBracket, l);
-      result->children[3] = terminal_tree(l->prev);
+      result->children[2] = terminal_tree(l->prev);
+      result->production = 4;
     } else {
       result = nonterminal_tree(TERMnt, 3);
       result->children[0] = terminal_tree((Token){LBracket, '['});
       result->children[1] = CLASS(l);
       expect(RBracket, l);
       result->children[2] = terminal_tree(l->prev);
+      result->production = 3;
     }
     return result;
   } else {
@@ -200,7 +205,6 @@ PTree *REGEX(Lexer *l)
 
 PTree *CLASS(Lexer *l)
 {
-  // this guy isn't really implemented yet
   PTree *result = nonterminal_tree(CLASSnt, 0), *curr, *prev;
   Token t1, t2, t3;
   curr = result;
@@ -218,6 +222,7 @@ PTree *CLASS(Lexer *l)
           curr->children[1] = terminal_tree(t3);
           curr->children[2] = nonterminal_tree(CLASSnt, 0);
           curr->nchildren = 3;
+          curr->production = 1;
           curr = curr->children[2];
         } else {
           // character followed by minus, but not range.
@@ -225,6 +230,7 @@ PTree *CLASS(Lexer *l)
           curr->children[0] = terminal_tree(t1);
           curr->children[1] = nonterminal_tree(CLASSnt, 0);
           curr->nchildren = 2;
+          curr->production = 3;
           curr = curr->children[1];
         }
       } else {
@@ -232,22 +238,24 @@ PTree *CLASS(Lexer *l)
         curr->children[0] = terminal_tree(t1);
         curr->children[1] = nonterminal_tree(CLASSnt, 0);
         curr->nchildren = 2;
+        curr->production = 3;
         curr = curr->children[1];
       }
     } else if (accept(Minus, l)) {
       // just a minus
       prev = curr;
       curr->children[0] = terminal_tree(l->prev);
-      curr->children[1] = nonterminal_tree(CLASSnt, 0);
-      curr->nchildren = 2;
-      curr = curr->children[1];
+      curr->nchildren = 1;
+      curr->production = 5;
+      break;
     } else {
       free(curr);
       prev->nchildren--;
+      prev->production++;
       break;
     }
   }
-  return result; // not yet implemented
+  return result;
 }
 
 PTree *reparse(char *regex)

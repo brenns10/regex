@@ -25,30 +25,31 @@ regular expressions.
 Here is the grammar I created:
 
 ```
-  REGEX -> SUB
-        -> SUB | REGEX
+  REGEX (-)-> SUB
+        (-)-> SUB | REGEX
 
-  SUB   -> EXPR
-        -> EXPR SUB
+  SUB   (-)-> EXPR
+        (-)-> EXPR SUB
 
-  EXPR  -> TERM
-        -> TERM +
-        -> TERM + ?
-        -> TERM *
-        -> TERM * ?
-        -> TERM ?
-        -> TERM ? ?
+  EXPR  (-)-> TERM
+        (-)-> TERM +
+        (-)-> TERM + ?
+        (-)-> TERM *
+        (-)-> TERM * ?
+        (-)-> TERM ?
+        (-)-> TERM ? ?
 
-  TERM  -> char
-        -> .
-        -> special
-        -> ( REGEX )
-        -> [ (^) CLASS ]
+  TERM  (1)-> char <OR> . <OR> special
+        (2)-> ( REGEX )
+        (3)-> [ CLASS ]
+        (4)-> [ ^ CLASS ]
 
-  CLASS -> char - char CLASS
-        -> char CLASS
-        -> -
-        ->
+  CLASS (1)-> char - char CLASS
+        (2)-> char - char
+        (3)-> char CLASS
+        (4)-> char
+        (5)-> -
 ```
 
-Seems legit, right?
+The numbers label the production number, which is actually recorded in the parse
+tree data structure in order to make it simpler to generate code.
