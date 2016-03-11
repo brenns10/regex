@@ -13,6 +13,8 @@
 
 *******************************************************************************/
 
+#include <string.h>
+
 #include "libstephen/ut.h"
 #include "tests.h"
 
@@ -32,18 +34,61 @@ static int test_dot(void)
   return 0;
 }
 
-/*static int test_special(void)
+static int test_special(void)
 {
   size_t n;
-  instr *prog = recomp(".", &n);
+  instr *prog;
 
+  prog = recomp("\\d", &n);
   TEST_ASSERT(n == 2);
-  TEST_ASSERT(prog[0].code == Any);
+  TEST_ASSERT(prog[0].code == Range);
+  TEST_ASSERT(prog[0].s == 1);
+  TEST_ASSERT(0 == strncmp("09", (char*)prog[0].x, 2));
   TEST_ASSERT(prog[1].code == Match);
-
   free_prog(prog, n);
+
+  prog = recomp("\\D", &n);
+  TEST_ASSERT(n == 2);
+  TEST_ASSERT(prog[0].code == NRange);
+  TEST_ASSERT(prog[0].s == 1);
+  TEST_ASSERT(0 == strncmp("09", (char*)prog[0].x, 2));
+  TEST_ASSERT(prog[1].code == Match);
+  free_prog(prog, n);
+
+  prog = recomp("\\w", &n);
+  TEST_ASSERT(n == 2);
+  TEST_ASSERT(prog[0].code == Range);
+  TEST_ASSERT(prog[0].s == 4);
+  TEST_ASSERT(0 == strncmp("azAZ09__", (char*)prog[0].x, 8));
+  TEST_ASSERT(prog[1].code == Match);
+  free_prog(prog, n);
+
+  prog = recomp("\\W", &n);
+  TEST_ASSERT(n == 2);
+  TEST_ASSERT(prog[0].code == NRange);
+  TEST_ASSERT(prog[0].s == 4);
+  TEST_ASSERT(0 == strncmp("azAZ09__", (char*)prog[0].x, 8));
+  TEST_ASSERT(prog[1].code == Match);
+  free_prog(prog, n);
+
+  prog = recomp("\\s", &n);
+  TEST_ASSERT(n == 2);
+  TEST_ASSERT(prog[0].code == Range);
+  TEST_ASSERT(prog[0].s == 6);
+  TEST_ASSERT(0 == strncmp("  \t\t\n\n\r\r\f\f\v\v", (char*)prog[0].x, 12));
+  TEST_ASSERT(prog[1].code == Match);
+  free_prog(prog, n);
+
+  prog = recomp("\\S", &n);
+  TEST_ASSERT(n == 2);
+  TEST_ASSERT(prog[0].code == NRange);
+  TEST_ASSERT(prog[0].s == 6);
+  TEST_ASSERT(0 == strncmp("  \t\t\n\n\r\r\f\f\v\v", (char*)prog[0].x, 12));
+  TEST_ASSERT(prog[1].code == Match);
+  free_prog(prog, n);
+
   return 0;
-  }*/
+}
 
 static int test_plus(void)
 {
@@ -276,8 +321,8 @@ void codegen_test(void)
   smb_ut_test *dot = su_create_test("dot", test_dot);
   su_add_test(group, dot);
 
-  /*smb_ut_test *special = su_create_test("special", test_special);
-    su_add_test(group, special);*/
+  smb_ut_test *special = su_create_test("special", test_special);
+  su_add_test(group, special);
 
   smb_ut_test *plus = su_create_test("plus", test_plus);
   su_add_test(group, plus);

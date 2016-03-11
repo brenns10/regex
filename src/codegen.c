@@ -32,6 +32,7 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include "regex.h"
 #include "regparse.h"
@@ -138,6 +139,46 @@ static Fragment *expr(PTree *t, State *s);
 static Fragment *class(PTree *t, State *s, bool is_negative);
 static Fragment *sub(PTree *t, State *s);
 
+static Fragment *special(char type, State *s)
+{
+  Fragment *f;
+
+  char whitespace[] = "  \t\t\n\n\r\r\f\f\v\v";
+  char word[] = "azAZ09__";
+  char number[] = "09";
+
+  switch (type) {
+  case 's':
+  case 'S':
+    f = (type == 's') ? newfrag(Range, s) : newfrag(NRange, s);
+    f->in.s = nelem(whitespace) / 2;
+    f->in.x = calloc(nelem(whitespace), sizeof(char));
+    memcpy(f->in.x, whitespace, nelem(whitespace));
+    break;
+  case 'w':
+  case 'W':
+    f = (type == 'w') ? newfrag(Range, s) : newfrag(NRange, s);
+    f->in.s = nelem(word) / 2;
+    f->in.x = calloc(nelem(word), sizeof(char));
+    memcpy(f->in.x, word, nelem(word));
+    break;
+  case 'd':
+  case 'D':
+    f = (type == 'd') ? newfrag(Range, s) : newfrag(NRange, s);
+    f->in.s = nelem(number) / 2;
+    f->in.x = calloc(nelem(number), sizeof(char));
+    memcpy(f->in.x, number, nelem(number));
+    break;
+  default:
+    fprintf(stderr, "not implemented: special character class '%c'\n", type);
+    exit(EXIT_FAILURE);
+    break;
+  }
+
+  f->next = newfrag(Match, s);
+  return f;
+}
+
 static Fragment *term(PTree *t, State *s)
 {
   Fragment *f = NULL;
@@ -157,7 +198,7 @@ static Fragment *term(PTree *t, State *s)
       f->next = newfrag(Match, s);
     } else if (t->children[0]->tok.sym == Special) {
       // Special
-      fprintf(stderr, "not implemented: term special\n");
+      f = special(t->children[0]->tok.c, s);
     }
   } else if (t->production == 2) {
     // Parenthesized expression
